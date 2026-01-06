@@ -1,0 +1,445 @@
+module.exports = {
+  pushEnv: {
+    //"env": "prod"
+    env: 'sandbox',
+  },
+  key: {
+    activekey:
+      'ace9a61712b4c64a7ede39d532c1b24269865f02a67db4cf85358958fcdad38a974a2755',
+    activename: 'instaleaf',
+  },
+  setting: {
+    SAVED_SETITING: 'Setting saved successfully.',
+    UPDATED_SETITING: 'Setting updated successfully.',
+    DISTANCE: 25000,
+    SHOPPING_AVAILABLE: 'Product Available',
+    SHOPPING_NOT_AVAILABLE: 'Product Not Available',
+  },
+
+  schedule: {
+    SAVED_SCHEDULE: 'Schedule saved successfully.',
+    UPDATED_SCHEDULE: 'Schedule updated successfully.',
+    SCHEDULE_DATA: 'Schedule Data.',
+    SCHEDULE_ERR: 'Schedule Not Found.',
+    AVAILABEL_DATA: 'Availability Data',
+    AVAILABEL_ERR: 'Availability Not Found.',
+  },
+
+  cart: {
+    SAVED_ITEM: 'Item saved successfully.',
+    UPDATED_CART: 'Cart updated successfully.',
+    QUANTITY_OVER: 'Product quantity over.',
+  },
+  plan: {
+    SAVED_PLAN: 'Userplan saved successfully.',
+    NO_FOUND: 'Plan not forund or not active.',
+  },
+
+  messages: {
+    //Registration and Login
+    OTP_ERR:'Otp is required',
+    OTP_SUCCESS:'otp verified Successfully',
+    USERNAME_EMAIL_REQUIRED: 'Username/Email is required.',
+    FIRSTNAME_REQUIRED: 'Firstname is required',
+    LASTNAME_REQUIRED: 'Lastname is required',
+    USERNAME_REQUIRED: 'Username is required',
+    MOBILE_REQUIRED: 'Mobile is required',
+    PASSWORD_REQUIRED: 'Password is required',
+    DRIVER_LOGIN: 'Your account has been verified.Please login to courier app.',
+    USERNAME_NOT_FOUND: 'Username not found.',
+    USER_ALREADY_VERIFIED: 'User already verified.',
+    USER_EXIST: 'Username already exists.',
+    SLUG_EXIST: 'Slug already exists.',
+    EMAIL_EXIST: 'Email-Id already exists.',
+    USERNAME_EMAIL_EXIST: 'Username and email id already exists.',
+    USERNAME_INACTIVE: 'You have not authorize user.',
+    USERNAME_NOT_VERIFIED: 'You have not verified your username. Please verify',
+    REQUIRED_FIELD: 'Fields required',
+    SUCCESSFULLY_REGISTERED: 'Successfully registered',
+    SUCCESSFULLY_LOGGEDIN: 'Successfully logged in',
+    AUTOLOGIN_SUCCESSFULLY_LOGGEDIN:
+      'Your account has been verified and you are logged in successfully.',
+    WRONG_USERNAME:
+      'The username/email you entered is incorrect.  Please check your username/email and try again.',
+    WRONG_PASSWORD:
+      'The password you entered is incorrect.  Please check your password and try again.',
+    CURRENT_PASSWORD: 'Current Password is incorrect.',
+    INVALID_USER: 'Invalid user, your email is not in our system',
+    USERNAME_NOT_EXIST:
+      "The email you entered doesn't appear to belong to an account. Please check your email and try again.",
+    ALREADY_VERIFIED:
+      'You have already verified your email. Please login to website.',
+    DATABASE_ISSUE: 'There is some problem to fetch the record.',
+    DELETE_RECORD: 'Record deleted successfully.',
+    STATUS_CHANGED: 'Status has been changed successfully.',
+    INVALID_STATUS: 'Invalid Status',
+    ADDED_SUCCESSFULL:
+      'Congratulations! User has been added successfully. Login credential has been sent to registered email.',
+    SOCIAL_USER_LOGGED_IN: 'Social user login successfully.',
+    SPACE_NOT_ALLOWED: 'Space is not allowed',
+    NOT_FOUND: 'Not Found',
+    YOUR_ACCOUNT: 'Your account has been',
+    CONTACT_ADMINISTRATOR: 'Please contact to Administrator.',
+    SEND_MAIL_ISSUE: 'There is some issue to send email.',
+    MAIL_SENT: 'Your request send successfully.',
+    FROM: 'from',
+    ERROR_MAIL: 'There is some error to send mail to your email id.',
+    LINK_MAIL: 'Password reset link has been sent to your email.',
+    PASSWORD_CHANGED: 'Password successfully changed.',
+    UNKNOW_ERROR_OCCURRED: 'Unknow Error Occurred',
+    NOT_AUTHORIZED: 'You are not authorized. Please contact to Administrator.',
+    TYPE: 'Type is required',
+    DISPENSARY_NAME_REQUIRED: 'Dispensary name is required.',
+    DISPENSARY_ADDRESS_REQUIRED: 'Dispensary address is required.',
+    DISPENSARY_CITY_REQUIRED: 'Dispensary city is required.',
+    DISPENSARY_SLUG_REQUIRED: 'Dispensary slug is required.',
+    DISPENSARY_POSTALCODE_REQUIRED: 'Dispensary postal code is required.',
+    LAT_REQUIRED: 'Dispensary lat is required.',
+    LNG_REQUIRED: 'Dispensary lng is required.',
+    DISPENSARY_SUCCESS: 'Dispensary successfully created.',
+    DISPENSARY_UPDATED: 'Dispensary updated successfully.',
+    DISPENSARY_ERROR: 'Dispensary not created,please try again.',
+    DISPENSARY_NOT_FOUND: 'Dispensary not found.',
+    DISPENSARY_DELETED: 'Dispensary deleted successfully.',
+    BRAND_NOT_FOUND: 'Brand not found.',
+
+    CITY_NOT_FOUND: 'City not found.',
+    BUSINESS_TYPE: 'Business type required.',
+    INVALID_PINCODE: 'Invalid postal code',
+
+    SEARCH_KEYWORD_REQUIRED: 'Search keyword required.',
+    DOMAIN: 'Domain is required',
+
+    ITEM_PRODUCT_NAME_REQUIRED: 'Product name required',
+    ITEM_NAME_REQUIRED: 'Item name required',
+    ITEM_PRE_ROLL_REQUIRED: 'Pre roll required',
+    ITEM_EIGHTH_REQUIRED: 'Eighth required',
+    ITEM_QUARTER_REQUIRED: 'quarter required',
+    ITEM_HALF_REQUIRED: 'Half required',
+    ITEM_OUNCE_REQUIRED: 'Ounce required',
+    ITEM_CATEGORY_REQUIRED: 'Category  required',
+    ITEM_CITY_REQUIRED: 'City  required',
+    ITEM_USERVISIT_REQUIRED: 'User visit  required',
+    ITEM_THC_REQUIRED: 'Thc required',
+    ITEM_CBD_REQUIRED: 'Cbd required',
+    ITEM_BRANDNAME_REQUIRED: 'Brand name required',
+    ITEM_PRODUCT_SUCCESS: 'Successfully added.',
+    ITEM_PRODUCT_ERROR: 'Some error occurred,please try again.',
+    ALREADY_EXIST_ANOTHER_BRAND: 'This product already exist in this brand.',
+    NO_DATA_FOUND: 'No data found.',
+    SUCCESSFULLY_EXECUTED: 'Successfully executed.',
+    NO_PRODUCT: 'No product found.',
+    NO_ACCESS: 'You are not allowed to edit this product',
+    ITEM_PRODUCT_UPDATED: 'Item product updated successfully.',
+
+    EMAIL_SEND_SUCCESSFULL: 'Email send successfully to respective group.',
+    NO_REVIEWS_FOUND: 'There are no reviews for this Item yet.',
+    ITEM_NOT_FOUND: 'There is no record exist in database.',
+    FORGOT_PASWORD: ' Password changed successfully. Please check your email.',
+    IMPORTED_SUCCESSFULLY: 'Data imported successfully.',
+    IMPORTED_SUCCESSFULLY: 'Data imported successfully.',
+    STYPE_SAVE: 'Subscription name saved successfully.',
+    STYPE_UPDATE: 'Subscription type updated successfully..',
+    SNAME_SAVE: 'Subscription name saved successfully.',
+    SNAME_UPDATE: 'Subscription name updated successfully.',
+    //"DISPENSARY_ADD_URL":"http://3.18.4.95:3000/page/subscriptions?U=",
+    DISPENSARY_ADD_URL: 'https://puffski.com/page/subscriptions?U=',
+    NEWPASSWORD_REQUIRED: 'New password required.',
+
+    INVALID_IMAGE: 'Image type not suppoerted.',
+
+    CHECK_EMAIL: 'New password is sent on your email. Please check your email.',
+    PRODUCT_EXIST: 'Product already exist',
+    PRODUCT_CREATED: 'Product created successfully.',
+    PRODUCT_UPDATED: 'Product updated successfully.',
+    QUESTION_SUCCESS:
+      'Thankyou for submitting your question, our team will get back to you as soon as possible.',
+  },
+
+  category: {
+    NAME_REQUIRED: 'Category name required.',
+    TYPE_REQUIRED: 'Category type required.',
+    VARIETY_REQUIRED: 'Variety of Category required.',
+    CATEGORY_ALREADY_EXIST: 'Category already exist.',
+    CATEGORY_SAVED: 'Category saved successfully.',
+    UPDATED_CATEGORY: 'Category updated successfully.',
+    ISSUE_IN_UPDATE: 'There is some issue with updating category.',
+  },
+  package: {
+    NAME_REQUIRED: 'SubscribePackage name required.',
+    TYPE_REQUIRED: 'SubscribePackage type required.',
+    VARIETY_REQUIRED: 'Variety of SubscribePackage required.',
+    PACKAGE_ALREADY_EXIST: 'Subscribe package already exist.',
+    PACKAGE_SAVED: 'SubscribePackage saved successfully.',
+    UPDATED_PACKAGE: 'SubscribePackage updated successfully.',
+    ISSUE_IN_UPDATE: 'There is some issue with updating subscribesackage.',
+    DELETE_SUCCESS: 'Category deleted successfully.',
+    ISSUE_IN_DELETE: 'There is some issue with the subscribesackage deletion.',
+  },
+
+  city: {
+    NAME_REQUIRED: 'City name required.',
+    SAVED_CITY: 'City has been saved successfully.',
+    CITY_ALREADY_EXIST:
+      'The same city is already saved. Please change the city.',
+    UPDATED_CITY: 'City updated successfully.',
+    CITY_ID_REQUIRED: 'City Id required.',
+    NO_CITY_FOUND:
+      'There is no city associated with the given ID. Please check and try again.',
+    DELETED_CITY: 'City deleted successfully.',
+    CITY_NOT_FOUND: 'City not found.',
+  },
+
+  news: {
+    SAVED_NEWS: 'News has been saved successfully.',
+    NEWS_ALREADY_EXIST:
+      'The same title is already saved. Please change the title.',
+    UPDATED_NEWS: 'News updated successfully.',
+    COMMENTS_SAVE: 'Comments for this news has been added successfully.',
+    NEWS_ID_REQUIRED: 'News Id required.',
+    NO_NEWS_FOUND:
+      'There is no news associated with the given ID. Please check and try again.',
+    MESSAGE_REQUIRED: 'Message is required',
+    EMAIL_REQUIRED: 'Email is required',
+    COMMENTS_NOT_FOUND: 'Comments not found',
+  },
+
+  banner: {
+    SAVED_BANNER: 'Banner has been saved successfully.',
+    UPDATED_BANNER: 'Banner updated successfully.',
+    NAME_REQUIRED: 'Banner name is required.',
+    IMAGE_REQUIRED: 'Banner Image is required.',
+    BANNERTYPE_REQUIRED: 'Banner Type is required',
+    BANNERSIZE_REQUIRED: 'Size of Banner is required',
+    URL_REQUIRED: 'URL is required',
+    BANNER_ID_REQUIRED: 'Banner Id required.',
+    NO_BANNER_FOUND:
+      'There is no banner associated with the given ID. Please check and try again.',
+  },
+
+  affiliate: {
+    NAME_REQUIRED: 'Affiliate name is required.',
+    LINK_REQUIRED: 'Affiliate link is required.',
+    SAVED_AFFILIATE: 'Affiliate has been saved successfully.',
+    AFFILIATE_ALREADY_EXIST:
+      'The same name is already saved. Please change the name.',
+    UPDATED_AFFILIATE: 'Affiliate updated successfully.',
+    AFFILIATE_ID_REQUIRED: 'Affiliate Id required.',
+    NO_AFFILIATE_FOUND:
+      'There is no affiliate associated with the given ID. Please check and try again.',
+    AFFILIATE_DETAIL_ISSUE: 'There is no detail found of this affiliate.',
+  },
+
+  product: {
+    NAME_REQUIRED: 'Product name required.',
+    ID_REQUIRED: 'Product id required.',
+    REVIEW_ID_REQUIRED: 'Review id required.',
+    PRODUCT_ALREADY_EXIST: 'Product already exist.',
+    ALREADY_FEATURED:
+      'Product Featured already exist.If you need save this so press YES',
+    REVIEW_ALREADY_EXIST: 'You have already posted your review.',
+    REPLY_ALREADY_EXIST: 'You have already replied over this review.',
+    REPLY_SAVED: 'Your reply over review has been saved successfully.',
+    PRODUCT_SAVED: 'Product saved successfully.',
+    REVIEW_SAVED: 'Review saved successfully.',
+    ISSUE_IN_DB: 'There is some issue to update database.',
+    NO_USER_IN_THIS_GROUP:
+      'There is no user in this group. You can send messages to other group',
+    UPDATED_PRODUCT: 'Product updated successfully.',
+    DELETED_PRODUCT: 'Product deleted successfully.',
+    DELETED_REPLY: 'Reply deleted successfully.',
+    DELETED_REVIEWS: 'Review deleted successfully.',
+    PRODUCT_DETAIL_ISSUE: 'There is some issue to get the product detail.',
+    GET_REVIEWS_SUCCESSFULLY: 'Reviews list successfully.',
+    PRODUCT_ID_REQUIRED: 'Product id required.',
+    REMOVED_FAVOURITE: 'Favourite removed successfully.',
+    ADD_FAVOURITE:
+      'You have added this product as a favourite product to your account.',
+    REVIEW_UPDATED: 'Review has been updated.',
+    CATEGORY_UPDATED: 'Category updated successfully.',
+    NOT_FOUND: 'Product not found.',
+    ADD_LIKE: 'Product liked successfully.',
+  },
+
+  favourite: {
+    REVIEW_EXIST: 'You have already added this product as a favourite product.',
+  },
+
+  user: {
+    USER_UPDATED: 'User updated successfully.',
+    USER_UPDATION_ISSUE: 'There is some issue to update user.',
+    EMAIL_NOT_FOUND:
+      'Sorry this email not exist on puffski, try again or signup for a new puffski account.',
+  },
+
+  staticRoles: {
+    ADMIN_CROP: '598c42bed820da2881c07329',
+  },
+
+  orders: {
+    ISSUE_IN_DB: 'There is some issue to update database.',
+    NO_USER_IN_THIS_GROUP:
+      'There is no user in this group. You can send messages to other group',
+    UPDATED_ORDER: 'Order updated successfully.',
+    DELETED_ORDER: 'Order deleted successfully.',
+    MAIL_SENT: 'Invoice has been sent successfully.',
+  },
+  producer: {
+    NAME_REQUIRED: 'Producer name required.',
+    TYPE_REQUIRED: 'Producer type required.',
+    PRODUCER_ALREADY_EXIST: 'Producer already exist.',
+    PRODUCER_SAVED: 'Producer saved successfully.',
+    UPDATED_PRODUCER: 'Producer updated successfully.',
+    ISSUE_IN_UPDATE: 'There is some issue with updating producer.',
+    NO_PRODUCER: 'No producer found.',
+  },
+  terpen: {
+    NAME_REQUIRED: 'Terpen Profile name required.',
+    TYPE_REQUIRED: 'Terpen Profile type required.',
+    TERPEN_ALREADY_EXIST: 'Terpen Profile already exist.',
+    TERPEN_SAVED: 'Terpen Profile saved successfully.',
+    UPDATED_TERPEN: 'Terpen Profile updated successfully.',
+    ISSUE_IN_UPDATE: 'There is some issue with updating terpen profile.',
+  },
+  marketplace: {
+    PRODUCT_NAME: 'Product name is required.',
+    PRODUCT_QTY: 'Quantity is required.',
+    PRICE: 'Price is required.',
+    PRODUCT_ALREADY_EXIST: 'Product already exist.',
+  },
+  supplier: {
+    NAME_REQUIRED: 'Supplier name required.',
+    TYPE_REQUIRED: 'Supplier type required.',
+    SUPPLIER_ALREADY_EXIST: 'Supplier already exist.',
+    SUPPLIER_SAVED: 'Supplier saved successfully.',
+    UPDATED_SUPPLIER: 'Supplier updated successfully.',
+    ISSUE_IN_UPDATE: 'There is some issue with updating supplier.',
+    NO_SUPPLIER: 'No supplier found.',
+    ACCOUNT_HOLDER_TYPE: 'Account Holder type is required',
+    ACCOUNT_HOLDER_NAME: 'Account Holder name is required',
+    ACCOUNT_NUMBER: 'Account Number is required',
+  },
+  blogs: {
+    SAVED_BLOGS: 'Blog saved successfully.',
+    BLOG_ALREADY_EXIST: 'Blog already exists.',
+    DATABASE_ISSUE: 'There is some problem to fetch the blog detail.',
+    UPDATED_BLOG: 'Blog updated successfully.',
+    UPDATED_BLOG_ISSUE: 'There is some issue with updating blog.',
+    NOTHING_TO_UPDATE: 'There is no changes to update.',
+    TITLE_REQUIRED: 'Blog title required.',
+    DESCRIPTION_REQUIRED: 'Blog description required.',
+    SAVED_COMMENT: 'Comment posted successfully',
+  },
+
+  friends: {
+    REQUEST_SENT: 'Friend request sent successfully.',
+    REQUEST_ACCEPTED: 'Friend request accepted successfully.',
+    REQUEST_REJECTED: 'Friend request rejected successfully.',
+    BLOCKED: 'User blocked successfully.',
+    UNBLOCKED: 'User unblocked successfully.',
+    FRIENDS_ID_REQUIRED: 'Friends id required.',
+    BLOCK_STATUS_REQUIRED: 'Block status missing.',
+    FRIENDS_NOT_FOUND: 'Friend not found.',
+  },
+
+  cultivators: {
+    NAME_REQUIRED: 'Cultivator name required.',
+    CITY_REQUIRED: 'Cultivator city required.',
+    ALREADY_EXIST: 'Cultivator already exist.',
+    ADDED_SUCCESSFULLY: 'Cultivator added successfully.',
+    UPDATED_SUCCESSFULLY: 'Cultivator updated successfully.',
+  },
+
+  driver: {
+    EMAIL_REQUIRED: 'Email required.',
+    USERNAME_REQUIRED: 'Username required.',
+    USERNAME_EXIST: 'Username already exist.',
+    EMAIL_EXIST: 'Email already taken.',
+    ADDED: 'Driver added successfully.',
+    UPDATED: 'Driver updated successfully.',
+    DRIVER_ASSIGN: 'Driver assigned successfully.',
+  },
+
+  payhq: {
+    ALREADY_EXIST: 'Card Already exist.',
+    CARD_ADD_SUCCESS: 'Card Added successfully.',
+    STORE_MERRCO_ERROR: 'Unable to add card right now. Please try again later.',
+  },
+
+  promo: {
+    PROMO_DELETED: 'Promo code deleted successfully.',
+    PROMO_UPDATED: 'Promo code updated successfully.',
+    PROMO_EXIST: 'Promo code already exist',
+    PROMO_CREATED: 'Promo code created successfully.',
+  },
+  cardError:{
+    ERROR_481_ISO_05: 'CREDIT CARD - Decline.',
+    ERROR_481_ISO_50: 'CREDIT CARD - Decline.',
+    ERROR_481_ISO_51: 'Low funds/Insufficient Balance.',
+    ERROR_481_ISO_57: 'CREDIT CARD - Decline.',
+    ERROR_481_ISO_58: 'Invalid Transaction.',
+    ERROR_481_ISO_62: 'CREDIT CARD - Decline.',
+    ERROR_481_ISO_65: 'Exceeded credit limit.',
+    ERROR_481_ISO_80: 'CREDIT CARD - Decline.',
+    ERROR_481_ISO_93: 'CREDIT CARD - Decline.',
+    ERROR_481_ISO_79: 'Life cycle declines.',
+    ERROR_481_ISO_82: 'Policy declines.',
+    ERROR_481_ISO_83: 'Security-related Declines.',
+
+    // ERROR_050_ISO_50: 'CREDIT CARD - Decline',
+    // ERROR_050_ISO_50: 'CREDIT CARD - Decline',
+    // ERROR_050_ISO_50: 'CREDIT CARD - Decline',
+    // ERROR_050_ISO_50: 'CREDIT CARD - Decline',
+    // ERROR_050_ISO_50: 'CREDIT CARD - Decline',
+  },
+  
+  country: {
+    NAME_REQUIRED: 'Country name required.',
+    TYPE_REQUIRED: 'Country type required.',
+    VARIETY_REQUIRED: 'Variety of Country required.',
+    COUNTRY_ALREADY_EXIST: 'Country already exist.',
+    COUNTRY_SAVED: 'Country saved successfully.',
+    UPDATED_COUNTRY: 'Country updated successfully.',
+    ISSUE_IN_UPDATE: 'There is some issue with updating country.',
+  },
+
+
+  testimonial: {
+    NAME_REQUIRED: 'Testimonial name required.',
+    TYPE_REQUIRED: 'Testimonial type required.',
+    VARIETY_REQUIRED: 'Variety of testimonial required.',
+    TESTIMONIAL_ALREADY_EXIST: 'Testimonial already exist.',
+    TESTIMONIAL_SAVED: 'Testimonial saved successfully.',
+    UPDATED_TESTIMONIAL: 'Country updated successfully.',
+    ISSUE_IN_UPDATE: 'There is some issue with updating testimonial.',
+  },
+
+  lsrproduct: {
+    NAME_REQUIRED: 'Product name required.',
+    CATEGORY_REQUIRED:'Product category required',
+    SUBCATEGORY_REQUIRED:'Product subcategory required',
+    ALREADY_EXIST: 'Product already exist.',
+    SAVED: 'Product saved successfully.',
+    UPDATED: 'Product updated successfully.',
+    ISSUE_IN_UPDATE: 'There is some issue with updating product.',
+  },
+
+  lsrcart: {
+    SAVED_ITEM: 'Product added to cart.',
+    UPDATED_CART: 'Product updated to cart.',
+    QUANTITY_OVER: 'Product quantity over.',
+  },
+  whislistpro: {
+    ADD_WHISLIST: 'Saved to favorites',
+    REMOVED_WHISLIST: 'Removed from favorites.',
+  },
+  brands: {
+    NAME_REQUIRED: 'Brand name required.',
+    TYPE_REQUIRED: 'Brand type required.',
+    VARIETY_REQUIRED: 'Variety of brand required.',
+    BRANDS_ALREADY_EXIST: 'Brand already exist.',
+    BRANDS_SAVED: 'Brand saved successfully.',
+    UPDATED_BRANDS: 'Brand updated successfully.',
+    ISSUE_IN_UPDATE: 'There is some issue with updating brand.',
+  },
+};

@@ -1,0 +1,1 @@
+router.post("/visit_website/:id", CommonController.visitWebsite);
