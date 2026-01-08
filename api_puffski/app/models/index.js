@@ -15,4 +15,7 @@ db.ReserveOrder = require('./ReserveOrders')
 db.UserLogin = require('./userLogin')
 db.UserActivity=require('./UserActivity')
 db.WebsiteViewed= require('./Websiteviewed')
+db.Subscribename = require('./Subscribename')
+db.Faq = require('./Faq')
+db.notifications  = require('./Notifications')
 module.exports= db
