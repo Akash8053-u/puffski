@@ -12,6 +12,8 @@ exports.create = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
+    console.log("hello");
+    
     const category = await service.Categoryservice.updateCategory(
       req.params.id,
       req.body
