@@ -193,8 +193,8 @@ router.post('/category', CategoryController.create);
 // Update category
 router.put('/category', CategoryController.update);
 
-// Get all categories (admin)
-//router.get('/allcategory', CategoryController.);
+router.get('/allcategory', CategoryController.getAll);
+
 
 router.delete('/deletecat/:id', CategoryController.delete);
 router.get('/categoryList', CategoryController.list);

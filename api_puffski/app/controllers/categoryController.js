@@ -1,5 +1,5 @@
-const service = require('../services/index')
-const db = require('../models/index')
+const service = require("../services/index");
+const db = require("../models/index");
 
 exports.create = async (req, res, next) => {
   try {
@@ -13,9 +13,9 @@ exports.create = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     console.log("hello master");
-    
+
     const category = await service.Categoryservice.updateCategory(
-      req.params.id,
+      req.body.id,
       req.body
     );
     res.json({ success: true, data: category });
@@ -27,7 +27,7 @@ exports.update = async (req, res, next) => {
 exports.delete = async (req, res, next) => {
   try {
     await service.Categoryservice.deleteCategory(req.params.id);
-    res.json({ success: true, message: 'Category deleted successfully' });
+    res.json({ success: true, message: "Category deleted successfully" });
   } catch (err) {
     next(err);
   }
@@ -35,15 +35,44 @@ exports.delete = async (req, res, next) => {
 
 exports.list = async (req, res, next) => {
   try {
-    const sortBy = req.query.sortBy || '-createdAt';
+    const portal = req.query.portal;
+    const categories = await service.Categoryservice.listCategories(portal);
 
-    const categories = await db.Category.find({
-      isDeleted: false,
-      status: 'active',
-    }).sort(sortBy);
-
-    res.json({ success: true, data: categories });
+    res.json({
+      success: true,
+      data: {
+        category: categories,
+      },
+    });
   } catch (err) {
     next(err);
+  }
+};
+
+exports.getAll = async (req, res, next) => {
+  try {
+    const { search, sortBy, page, count, filter } = req.query;
+
+    const result = await service.Categoryservice.getAllCategories({
+      search,
+      sortBy,
+      page,
+      count,
+      filter,
+    });
+
+    res.json({
+      success: true,
+      data: {
+        category: result.categories,
+        total: result.total,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({
+      success: false,
+      error: { code: 400, message: err.message || "Something went wrong" },
+    });
   }
 };
