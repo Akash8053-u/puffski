@@ -39,7 +39,7 @@ const authMiddleware = async (req, res, next) => {
 
   
     req.identity = {
-      id: decoded.id,
+      id: decoded._id,
       role: decoded.role,
       email: decoded.email
     };

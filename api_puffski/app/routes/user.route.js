@@ -8,6 +8,8 @@ const visitController = require("../controllers/visitController");
 const FaqController = require("../controllers/faqController");
 const SubscribenameController = require("../controllers/SubscribenameController");
 const NotificationController = require('../controllers/NotificationController')
+const BlogsController = require('../controllers/BlogsController');
+const CategoryController = require('../controllers/categoryController')
 // const OAuthController = require("../controllers/OAuthController");
 // const CommonController = require("../controllers/commonController");
 
@@ -158,4 +160,42 @@ router.get("/faq/all", FaqController.listing);
 //Notifications
 router.get('/getAllNotifications', NotificationController.getAllNotifications);
 router.put('/updateReadStatus/:id', NotificationController.updateReadStatus);
+
+
+
+
+
+router.post('/blog', BlogsController.save);
+
+
+router.get('/blog', BlogsController.getAllBlog);
+
+
+router.put('/editblogs/:id', BlogsController.edit);
+
+
+router.post('/addcomment', BlogsController.addComment);
+
+
+router.get('/singleblog', BlogsController.getSingleBlog);
+
+router.get('/blogdetail/:id', BlogsController.blogdetail);
+
+
+router.get('/topblogs', BlogsController.getTop3Blogs);
+
+
+router.get('/dispensaryblogs/:id', BlogsController.dispensaryblogs);
+
+//category controller
+router.post('/category', CategoryController.create);
+
+// Update category
+router.put('/category', CategoryController.update);
+
+// Get all categories (admin)
+//router.get('/allcategory', CategoryController.);
+
+router.delete('/deletecat/:id', CategoryController.delete);
+router.get('/categoryList', CategoryController.list);
 module.exports = router;

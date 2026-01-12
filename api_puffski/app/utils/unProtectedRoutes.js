@@ -11,5 +11,6 @@ module.exports={
     '/webhook',
     '/blogs/listing',
     '/blog/detail','/feedback',"/account/:id",'/signin',
-'']
+    ]
+
 }

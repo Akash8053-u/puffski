@@ -18,4 +18,6 @@ db.WebsiteViewed= require('./Websiteviewed')
 db.Subscribename = require('./Subscribename')
 db.Faq = require('./Faq')
 db.notifications  = require('./Notifications')
+db.Blogs = require('./Blogs')
+db.Category = require('./category')
 module.exports= db
