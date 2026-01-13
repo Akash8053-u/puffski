@@ -1,15 +1,11 @@
-// src/middleware/auth.middleware.js
-
 const jwt = require("jsonwebtoken");
 const { unprotectedRoute } = require("../utils/unProtectedRoutes");
-require("dotenv").config();
 
 const authMiddleware = async (req, res, next) => {
   try {
-    const path = req.path; // cleaner than req.url
+    const path = req.path;
     console.log("Requested:", req.originalUrl);
 
-    // Check if the route is unprotected
     if (unprotectedRoute.includes(path)) {
       return next();
     }
@@ -22,8 +18,7 @@ const authMiddleware = async (req, res, next) => {
         error: { code: 401, message: "No token, authorization denied" },
       });
     }
-
-    // Expected format: Bearer <token>
+    
     const [scheme, token] = authHeader.split(" ");
 
     if (scheme !== "Bearer" || !token) {
@@ -33,18 +28,25 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     console.log("Decoded JWT:", decoded);
 
-  
+    // Create identity object based on ACTUAL JWT content
     req.identity = {
-      id: decoded._id,
-      role: decoded.role,
-      email: decoded.email
+      id: decoded.user_id || decoded._id || decoded.id, // Use user_id from JWT
+      client_id: decoded.client_id,
+      // Only include if they exist in JWT
+      ...(decoded.role && { role: decoded.role }),
+      ...(decoded.email && { email: decoded.email }),
+      isSellerApproved: decoded.isSellerApproved || false
     };
-  console.log("user validated");
-  
+    
+    req.user = req.identity;
+    req.user_id = req.identity.id; // This will now work
+    
+    console.log("User validated - ID:", req.identity.id);
+    console.log("Full identity:", req.identity);
+
     next();
 
   } catch (err) {

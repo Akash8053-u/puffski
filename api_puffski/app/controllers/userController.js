@@ -46,6 +46,7 @@ async function register(req, res) {
 
     // Only send error response if headers not already sent
     if (!res.headersSent) {
+      console.error("Register Controller Error:", err);
       return res.status(500).json({
         success: false,
         error: { code: 500, message: "Internal Server Error" },
