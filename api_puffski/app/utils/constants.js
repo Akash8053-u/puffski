@@ -37,8 +37,8 @@ module.exports = {
 
   messages: {
     //Registration and Login
-    OTP_ERR:'Otp is required',
-    OTP_SUCCESS:'otp verified Successfully',
+    OTP_ERR: 'Otp is required',
+    OTP_SUCCESS: 'otp verified Successfully',
     USERNAME_EMAIL_REQUIRED: 'Username/Email is required.',
     FIRSTNAME_REQUIRED: 'Firstname is required',
     LASTNAME_REQUIRED: 'Lastname is required',
@@ -164,6 +164,33 @@ module.exports = {
     CATEGORY_SAVED: 'Category saved successfully.',
     UPDATED_CATEGORY: 'Category updated successfully.',
     ISSUE_IN_UPDATE: 'There is some issue with updating category.',
+    DELETE_SUCCESS: 'Category deleted successfully.',
+    ISSUE_IN_DELETE: 'There is some issue with the category deletion.'
+  },
+  onBoarding: {
+    LOGIN_SUCCESS: 'Login successfully.',
+    CURRENT_PASSWORD: 'Current password is wrong',
+    PASSWORD_CHANGED: 'Password changed successfully.',
+    WRONG_PASSWORD: 'Invalid credentials.',
+    USERNAME_INACTIVE: 'Account is not active.',
+    PAYLOAD_MISSING: 'Payload missing.',
+    ACCOUNT_NOT_FOUND: 'Account not found.',
+    VERIFICATION_CODE_SENT: 'Please check your email reset password link.',
+    WRONG_VERIFICATION_CODE: 'Verification code is incorrect.',
+    PASSWORD_RESET: 'Password reset successfully.',
+    EMAIL_EXIST: 'Email already exist.',
+    STATUS_CHANGED: 'Status changed successfully',
+    USER_DELETED: 'User deleted successfully.',
+    EMAIL_REQUIRED: 'Email required.',
+    PASSWORD_REQUIRED: 'Password required',
+    LOGIN_SUCCESS: 'Login successfully.',
+    PROFILE_UPDATED: 'Profile updated successfully.',
+    USER_ADDED: 'User added successfully.',
+    TOKEN_VALID: 'This token will valid for 1 hour only.',
+    INVALID_ID: 'Invalid id.',
+    NOT_VERIFIED: 'Please verify your email first.',
+    EMAIL_AVAILABLE: 'You can use this email.',
+    EMAIL_TAKEN: 'Email is already in use.',
   },
   package: {
     NAME_REQUIRED: 'SubscribePackage name required.',
@@ -276,6 +303,15 @@ module.exports = {
     ADMIN_CROP: '598c42bed820da2881c07329',
   },
 
+  lsrproduct: {
+    NAME_REQUIRED: "Product name is required",
+    CATEGORY_REQUIRED: "Category is required",
+    SUBCATEGORY_REQUIRED: "Subcategory is required",
+    ALREADY_EXIST: "Product already exists",
+    SAVED: "Product saved successfully",
+    UPDATED: "Product updated successfully",
+    ISSUE_IN_UPDATE: "There was an issue updating the product"
+  },
   orders: {
     ISSUE_IN_DB: 'There is some issue to update database.',
     NO_USER_IN_THIS_GROUP:
@@ -372,7 +408,7 @@ module.exports = {
     PROMO_EXIST: 'Promo code already exist',
     PROMO_CREATED: 'Promo code created successfully.',
   },
-  cardError:{
+  cardError: {
     ERROR_481_ISO_05: 'CREDIT CARD - Decline.',
     ERROR_481_ISO_50: 'CREDIT CARD - Decline.',
     ERROR_481_ISO_51: 'Low funds/Insufficient Balance.',
@@ -392,7 +428,7 @@ module.exports = {
     // ERROR_050_ISO_50: 'CREDIT CARD - Decline',
     // ERROR_050_ISO_50: 'CREDIT CARD - Decline',
   },
-  
+
   country: {
     NAME_REQUIRED: 'Country name required.',
     TYPE_REQUIRED: 'Country type required.',
@@ -416,8 +452,8 @@ module.exports = {
 
   lsrproduct: {
     NAME_REQUIRED: 'Product name required.',
-    CATEGORY_REQUIRED:'Product category required',
-    SUBCATEGORY_REQUIRED:'Product subcategory required',
+    CATEGORY_REQUIRED: 'Product category required',
+    SUBCATEGORY_REQUIRED: 'Product subcategory required',
     ALREADY_EXIST: 'Product already exist.',
     SAVED: 'Product saved successfully.',
     UPDATED: 'Product updated successfully.',
