@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const validate = require('./api_puffski/app/middleware/authmiddleware')
+const auth = require('./api_puffski/app/middleware/authmiddleware')
 require('dotenv').config();
 
 const connectDb = require('./api_puffski/app/config/db');
