@@ -446,6 +446,43 @@ static async getProducerCategoriesWithProductService  (producerId) {
   // 4. Remove null values
   return filteredCategories.filter(Boolean);
 };
+static async getProducerCategoriesWithProduct  (producerId) {
+  // 1. Get producer
+  const producer = await Item.findOne({ id: producerId });
+  if (!producer) return [];
+
+  // 2. Get categories
+  const categories = await Category.find({
+    isDeleted: false,
+    type: "product",
+    instaleaf_producerId: producerId
+  });
+
+  if (!categories.length) return [];
+
+  const resultCategories = [];
+
+  // 3. Loop categories and check products
+  for (const category of categories) {
+    const productExists = await Itemproduct.exists({
+      isDeleted: false,
+      quantity: { $gt: 2 },
+      instaleaf_producerName: { $exists: true },
+      $or: [
+        { instaleaf_producerName: new RegExp(producer.name, "i") },
+        { supplierName: new RegExp(producer.name, "i") },
+        { producer_category_id: category.id },
+        { instaleaf_categoryId: category.id }
+      ]
+    });
+
+    if (productExists) {
+      resultCategories.push(category);
+    }
+  }
+
+  return resultCategories;
+};
 
 }
 
