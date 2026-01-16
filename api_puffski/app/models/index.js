@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+
 const db = {}
 db.url= require('../config/db')
 db.User=require('./users')
@@ -23,6 +24,8 @@ db.Blogs = require('./Blogs')
 db.Category = require('./category')
 db.Itemcategory = require('./ItemCategory')
 db.Itemproduct = require('./Itemproduct')
+
+
 
 module.exports= db
 

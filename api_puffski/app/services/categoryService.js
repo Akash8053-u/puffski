@@ -384,6 +384,7 @@ static async getMasterCategoriesService({
   const categories = await Category.find(query)
     .populate('instaleaf_producerId') // populate producer details
     .sort(sortBy)
+db.url= requ
     .skip(skip)
     .limit(count)
     .lean();
