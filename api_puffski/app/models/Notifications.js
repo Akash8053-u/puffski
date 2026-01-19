@@ -54,7 +54,7 @@ const NotificationSchema = new mongoose. Schema(
     },
   },
   {
-    timestamps: true, // replaces autoCreatedAt & autoUpdatedAt
+    timestamps: true, 
     versionKey: false,
   }
 );

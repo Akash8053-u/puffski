@@ -2,8 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 router.use('/',require('./user.route'))
-router.use('/api/products', require('./lsrProductRoutes'));
-router.use('/api/categories', require('./lsrCategoryRoutes'));
+router.use('/lsr', require('./lsr.route'));
 router.get('/', (req, res) => {
     res.json({
         message: 'API Server is running',

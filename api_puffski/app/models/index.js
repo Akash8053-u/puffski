@@ -8,6 +8,7 @@ const Item = require('./item');
 const wishList = require('./wishList');
 const LsrProduct = require('./lsrProduct');
 const LsrCategory = require('./lsrCategory');
+const LsrBrands = require('./LsrBrands')
 const PromoCodes = require('./PromoCodes');
 const ReserveOrder = require('./ReserveOrders');
 const UserLogin = require('./userLogin');
@@ -28,6 +29,7 @@ const db = {
     wishList,
     LsrProduct,
     LsrCategory,
+    LsrBrands,
     PromoCodes,
     ReserveOrder,
     UserLogin,

@@ -303,6 +303,14 @@ module.exports = {
     ADMIN_CROP: '598c42bed820da2881c07329',
   },
 
+  LsrBrand: {
+    NAME_REQUIRED: 'Brand name required.',
+    BRANDS_ALREADY_EXIST: 'Brand already exists.',
+    BRANDS_SAVED: 'Brand saved successfully.',
+    UPDATED_BRANDS: 'Brand updated successfully.',
+    ISSUE_IN_UPDATE: 'There is some issue with updating brand.',
+    BRAND_NOT_FOUND: 'Brand not found.'
+  },
   lsrproduct: {
     NAME_REQUIRED: "Product name is required",
     CATEGORY_REQUIRED: "Category is required",

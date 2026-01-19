@@ -20,14 +20,13 @@ const productSchema = new mongoose.Schema({
         trim: true
     },
     
-    // Pricing
     price: {
         type: Number,
         default: 0.0,
         min: 0
     },
     
-    // Categories & Branding
+ 
     category: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'LsrCategory'
@@ -41,7 +40,7 @@ const productSchema = new mongoose.Schema({
         ref: 'LsrBrand'
     },
     
-    // Images
+   
     image: {
         type: String
     },
@@ -50,7 +49,6 @@ const productSchema = new mongoose.Schema({
         default: []
     },
     
-    // Ownership & Location
     seller: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
@@ -65,7 +63,7 @@ const productSchema = new mongoose.Schema({
         trim: true
     },
     
-    // Inventory Management
+   
     stock: {
         type: Number,
         default: 0,
@@ -81,7 +79,7 @@ const productSchema = new mongoose.Schema({
         default: false
     },
     
-    // SEO & Search
+   
     keywords: {
         type: [String],
         default: []
@@ -91,7 +89,7 @@ const productSchema = new mongoose.Schema({
         trim: true
     },
     
-    // Product Details
+   
     ingredients: {
         type: String,
         trim: true
@@ -101,7 +99,7 @@ const productSchema = new mongoose.Schema({
         trim: true
     },
     
-    // SEO Metadata
+   
     slug: {
         type: String,
         required: true,
@@ -122,13 +120,13 @@ const productSchema = new mongoose.Schema({
         trim: true
     },
     
-    // Shipping
+  
     shipping: {
         type: mongoose.Schema.Types.Mixed,
         default: {}
     },
     
-    // Audit Trail
+ 
     updatedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
@@ -138,7 +136,7 @@ const productSchema = new mongoose.Schema({
         ref: 'User'
     },
     
-    // Status & Soft Delete
+   
     status: {
         type: String,
         enum: ['active', 'deactive'],
