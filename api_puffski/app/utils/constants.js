@@ -154,9 +154,25 @@ module.exports = {
     PRODUCT_UPDATED: 'Product updated successfully.',
     QUESTION_SUCCESS:
       'Thankyou for submitting your question, our team will get back to you as soon as possible.',
+
+    CARD_ADDED: 'Card added successfully.',
+    CARD_EXIST: 'Card already exist.',
+    CARD_DELETED: 'Card deleted successfully.',
+    DEFAULT_CARD: 'Primary card set successfully.',
+    PLAN_PURCHASED: 'Plan purchased successfully.',
+    SUBSCRIPTION_CANCELED: 'Subscription cancelled successfully.',
+    NOT_SUBSCRIBED: 'No subscription found.',
   },
 
   category: {
+    ALREADY_EXIST: 'Category already exist.',
+    CREATED: 'Category created successfully.',
+    UPDATED: 'Category updated successfully.',
+    STATUS_CHANGED: 'Status changed successfully.',
+    DELETED: 'Category deleted successfully.',
+    ASSOCAITED_WITH_FEATURE: 'Unable to delete category as assocciated with features.',
+    ORDER_UPDATED: 'Category order updated Successfully.',
+    
     NAME_REQUIRED: 'Category name required.',
     TYPE_REQUIRED: 'Category type required.',
     VARIETY_REQUIRED: 'Variety of Category required.',

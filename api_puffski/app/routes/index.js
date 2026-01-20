@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 
-router.use('/',require('./user.route'))
+router.use('/',require('./user.route'));
 router.use('/lsr', require('./lsr.route'));
+router.use('/common',require('./commonRoutes'));
 router.get('/', (req, res) => {
     res.json({
         message: 'API Server is running',

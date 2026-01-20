@@ -8,7 +8,7 @@ const Item = require('./item');
 const wishList = require('./wishList');
 const LsrProduct = require('./lsrProduct');
 const LsrCategory = require('./lsrCategory');
-const LsrBrands = require('./LsrBrands')
+const LsrBrands = require('./LsrBrands');
 const PromoCodes = require('./PromoCodes');
 const ReserveOrder = require('./ReserveOrders');
 const UserLogin = require('./userLogin');
@@ -19,7 +19,13 @@ const Faq = require('./Faq');
 const notifications = require('./Notifications');
 const Blogs = require('./Blogs');
 const Category = require('./category');
-
+const cart = require('./cart');
+const buiyProductAnalytics = require('./buyProductAnalytics');
+const failedCards = require('./failedCards');
+const itemCategory = require('./ItemCategory');
+const itemProduct = require('./Itemproduct');
+const LsrCart = require('./lsrCarts');
+const LsrMerrcoCard = require('./lsrMerrecoCards');
 const db = {
     mongoose,
     User,
@@ -39,7 +45,14 @@ const db = {
     Faq,
     notifications,
     Blogs,
-    Category
+    Category,
+    cart,
+    buiyProductAnalytics,
+    failedCards,
+    itemCategory,
+    itemProduct,
+    LsrMerrcoCard,
+    LsrCart
 };
 
 module.exports = db;
