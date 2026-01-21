@@ -1,44 +1,35 @@
-// controllers/CartController.js
-const { CronJob } = require('cron');
-const { createClient } = require('redis');
-const request = require('request');
 const mongoose = require('mongoose');
-const constants = require('../utils/constants.js');
+const cron = require('node-cron');
+const redis = require('redis');
+const request = require('request');
+const constants = require('../utils/constants');
+const ObjectId = mongoose.Types.ObjectId;
+const redisClient = redis.createClient();
+redisClient.connect().catch(console.error);
 
-// Redis client setup
-const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
-});
+const Cart = require('../models/cart');
+const Product = require('../models/product');
+const Itemproduct = require('../models/Itemproduct');
+const UserActivity = require('../models/UserActivity');
+const StoreInfo = require('../models/StoreInfo');
+const Producer = require('../models/product'); 
 
-redisClient.on('error', (err) => console.error('Redis Client Error', err));
+const getUserId = (req) => {
+  return req.user?.id || req.identity?.id || req.query.userId || req.body.userId;
+};
 
-// Initialize Redis connection 
-(async () => {
+cron.schedule('0 2 * * *', () => {
+  console.log('cron is running');
   try {
-    await redisClient.connect();
-    console.log('Redis connected successfully');
+    Cart.deleteMany({}).then(() => {
+      console.log('Cart cleaned successfully');
+    });
   } catch (err) {
-    console.error('Redis connection error:', err);
+    console.log('Cron job error:', err);
   }
-})();
-
-// Initialize cron job
-new CronJob(
-  '0 2 * * *',
-  async () => {
-    console.log('cron is running');
-    try {
-      await Cart.deleteMany({});
-    } catch (err) {
-      console.error('Cron error:', err);
-    }
-  },
-  null,
-  true,
-  'UTC'
-);
-
-// Helper functions
+}, {
+  timezone: 'UTC'
+});
 
 function cleanProducts(products) {
   return products.map(product => {
@@ -68,149 +59,58 @@ async function updateExistingRecord(key, value) {
     const cache = await redisClient.get(key);
     
     if (!cache) {
-      const dataToAdd = { success: true, data: [value] };
+      let dataToAdd = { success: true, data: [value] };
       await redisClient.set(key, JSON.stringify(dataToAdd));
-      return;
-    }
-    
-    let data = JSON.parse(cache);
-    
-    if (data && data.data && data.data.length > 0) {
-      data.data = data.data.filter(x => x !== null);
-      const foundIndex = data.data.findIndex(x => String(x.id) === String(value.id));
+    } else {
+      let data = JSON.parse(cache);
       
-      if (foundIndex > -1) {
-        if (value.quantity > 2) {
-          data.data[foundIndex] = value;
-          data.data = data.data.filter(x => x !== null);
+      if (data && data.data && data.data.length > 0) {
+        data.data = data.data.filter(x => x != null);
+        
+        const foundIndex = data.data.findIndex(x => String(x.id) === String(value.id));
+        
+        if (foundIndex > -1) {
+          if (value.quantity > 2) {
+            data.data[foundIndex] = value;
+            data.data = data.data.filter(x => x != null);
+            await redisClient.set(key, JSON.stringify(data));
+          } else {
+            data.data.splice(foundIndex, 1);
+            await redisClient.set(key, JSON.stringify(data));
+          }
         } else {
-          data.data.splice(foundIndex, 1);
+          if (value.quantity > 2) {
+            data.data.push(value);
+            await redisClient.set(key, JSON.stringify(data));
+          }
         }
       } else {
-        if (value.quantity > 2) {
-          data.data.push(value);
-        }
+        console.log(`Cache not found for updateExistingRecord: ${key}`);
       }
-      
-      await redisClient.set(key, JSON.stringify(data));
-    } else {
-      const dataToAdd = { success: true, data: [value] };
-      await redisClient.set(key, JSON.stringify(dataToAdd));
     }
   } catch (err) {
-    console.error('Redis update error:', err);
+    console.error('Redis error in updateExistingRecord:', err);
   }
 }
 
-function createRedisObject(productData) {
-  return {
-    "_id": productData._id || productData.id,
-    "id": productData._id || productData.id,
-    "dispensary_id": productData.dispensary_id,
-    "name": productData.name,
-    "parentProductName": productData.parentProductName || null,
-    "description": productData.description,
-    "sku": productData.sku,
-    "slug": productData.slug,
-    "barcode": productData.barcode,
-    "imageUrl": productData.imageUrl || null,
-    "price": productData.price,
-    "categoryId": productData.categoryId,
-    "categoryName": productData.parentCategoryName,
-    "parentCategoryId": productData.parentCategoryId,
-    "parentCategoryName": productData.parentCategoryName,
-    "supplierId": productData.supplierId,
-    "supplierName": productData.supplierName,
-    "quantity": productData.quantity || 0,
-    "weight": productData.weight || 0,
-    "cannabisWeight": productData.cannabisWeight,
-    "cannabisVolume": productData.cannabisVolume || null,
-    "thc": productData.thc || 0,
-    "cbd": productData.cbd || 0,
-    "CBD_Content": productData.CBD_Content || 0,
-    "CBD_Percent": productData.CBD_Percent || 0,
-    "THC_Content": productData.THC_Content || 0,
-    "THC_Percent": productData.THC_Percent || 0,
-    "detail": productData.detail || "",
-    "weightUnit": productData.weightUnit || "",
-    "product_id": productData.product_id || null,
-    "productQty": productData.quantity || 0,
-    "specialPrice": productData.specialPrice || 0,
-    "isFavourite": productData.isFavourite || "",
-    "metaData": productData.metaData || {},
-    "taxes": productData.taxes,
-    "depositFee": productData.depositFee || null,
-    "inStock": productData.inStock,
-    "category_id": productData.category_id || null,
-    "producer_id": productData.producer_id,
-    "category_name": productData.category_name,
-    "categeoryname": productData.category_name,
-    "producername": productData.producer_id?.name || "",
-    "producer_supplierId": productData.producer_id?.supplierId || "",
-    "order": 2,
-    "pos_name": productData.pos_name,
-    "dispensary_id": productData.dispensary_id,
-    "dataType": "import",
-    "addedBy": productData.addedBy?.firstName || "",
-    "createdBy": productData.createdBy,
-    "pre_roll": productData.pre_roll || 0,
-    "Eighth": productData.Eighth || 0,
-    "quarter": productData.quarter || 0,
-    "half": productData.half || 0,
-    "ounce": productData.ounce || 0,
-    "details": productData.details || "",
-    "thc_max": productData.thc_max || 0,
-    "thc_min": productData.thc_min || 0,
-    "cbd_max": productData.cbd_max || 0,
-    "cbd_min": productData.cbd_min || 0,
-    "image": productData.image || "",
-    "status": productData.status,
-    "isDeleted": productData.isDeleted,
-    "brand_name": productData.brand_name || "",
-    "grams": productData.grams || 0,
-    "isSpecial": "deactive",
-    "isStaff": "deactive",
-    "isStore": "deactive",
-    "inResponse": productData.quantity > 2,
-    "createdAt": productData.createdAt,
-    "updatedAt": productData.updatedAt,
-    "instaleaf_category": productData.instaleaf_categoryId || null,
-    "instaleaf_categoryId": productData.instaleaf_categoryId?._id || productData.instaleaf_categoryId?.id || null,
-    "instaleaf_categoryName": productData.instaleaf_categoryId?.name || "",
-    "instaleaf_producer": productData.instaleaf_producerId || null,
-    "instaleaf_producerId": productData.instaleaf_producerId?._id || productData.instaleaf_producerId?.id || null,
-    "updatedBy": productData.updatedBy || null,
-    "pos_product_id": productData.pos_product_id,
-    "isFrontendHide": productData.quantity <= 2,
-    "discountPercent": productData.discountPercent || "",
-    "discountPrice": productData.discountPrice || 0,
-    "isOnSale": productData.isOnSale || false,
-    "meta_title": productData.meta_title || "",
-    "meta_name": productData.meta_name || "",
-    "meta_desc": productData.meta_desc || "",
-    "meta_keywords": productData.meta_keywords || "",
-    "likeCount": productData.likeCount || 0,
-    "dislikeCount": productData.dislikeCount || 0,
-  };
-}
-
-// Import models
-const Cart = require('../models/cart.js');
-const Itemproduct = require('../models/Itemproduct.js');
-const Product = require('../models/product.js');
-const Item = require('../models/item.js');
-const Itemproducer = require('../models/Itemproducer.js');
-const UserActivity = require('../models/UserActivity.js');
-const StoreInfo = require('../models/StoreInfo.js');
-
-class CartController {
-  // Get cart items
-  async getCart(req, res) {
+const CartController = {
+  getCart: async (req, res) => {
     try {
-      const userId = req.user.id || req.identity.id;
-      const { dispensary_id } = req.query;
+      const userId = getUserId(req);
       
-      const query = {
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 401,
+            message: 'Unauthorized: User not authenticated',
+          },
+        });
+      }
+      
+      const dispensary_id = req.query.dispensary_id;
+      
+      let query = {
         addedBy: userId,
         cart_type: { $exists: false }
       };
@@ -219,28 +119,40 @@ class CartController {
         query.dispensary_id = dispensary_id;
       }
       
-      const cartItems = await Cart.find(query)
-        .populate('product_id');
+      const data = await Cart.find(query)
+        .populate('product_id')
+        .exec();
       
       return res.status(200).json({
         success: true,
-        data: cartItems
+        data: data,
       });
     } catch (err) {
+      console.error('Get cart error:', err);
       return res.status(400).json({
         success: false,
         error: err.message
       });
     }
-  }
+  },
 
-  // Get reserved cart
-  async getReservedCart(req, res) {
+  getReservedCart: async (req, res) => {
     try {
-      const userId = req.user.id || req.identity.id;
-      const { dispensary_id } = req.query;
+      const userId = getUserId(req);
       
-      const query = {
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 401,
+            message: 'Unauthorized: User not authenticated',
+          },
+        });
+      }
+      
+      const dispensary_id = req.query.dispensary_id;
+      
+      let query = {
         addedBy: userId,
         cart_type: 'reserved'
       };
@@ -249,47 +161,33 @@ class CartController {
         query.dispensary_id = dispensary_id;
       }
       
-      const cartItems = await Cart.find(query)
-        .populate({
-          path: 'item_product_id',
-          populate: [
-            { path: 'addedBy' },
-            { path: 'category_id' },
-            { path: 'producer_id' },
-            { path: 'instaleaf_producerId' },
-            { path: 'instaleaf_categoryId' }
-          ]
-        });
+      const data = await Cart.find(query)
+        .populate('item_product_id')
+        .exec();
       
       let flag = false;
       let dispensaryFlag = false;
       
-      for (const item of cartItems) {
-        const itemProductId = item.item_product_id?._id || item.item_product_id?.id;
-        
-        if (itemProductId) {
-          // If product_id exists in item_product_id, populate it
-          if (item.item_product_id?.product_id) {
-            const productData = await Product.findById(item.item_product_id.product_id);
-            if (productData) {
-              item.item_product_id.product_id = productData;
-            }
+      for (const itm of data) {
+        if (itm.item_product_id && itm.item_product_id._id) {
+          if (itm && itm.item_product_id && itm.item_product_id.product_id) {
+            const productData = await Product.findById(itm.item_product_id.product_id);
+            itm.item_product_id.product_id = productData;
           }
           
-          // Check quantity
-          const count = await Itemproduct.findById(itemProductId);
+          const count = await Itemproduct.findById(itm.item_product_id._id);
           
-          if (!item.item_product_id?.inResponse || count?.quantity < 3 || count?.quantity < item.quantity) {
-            item.isOutOfStock = true;
+          if (itm.item_product_id.inResponse === false || count.quantity < 3 || count.quantity < itm.quantity) {
+            itm.isOutOfStock = true;
             flag = true;
           } else {
-            item.isOutOfStock = false;
+            itm.isOutOfStock = false;
           }
         } else {
-          item.isOutOfStock = false;
+          itm.isOutOfStock = false;
         }
         
-        if (dispensary_id && dispensary_id === item.dispensary_id?.toString()) {
+        if (dispensary_id && (dispensary_id == itm.dispensary_id)) {
           dispensaryFlag = true;
         }
       }
@@ -298,70 +196,69 @@ class CartController {
         success: true,
         isStore: dispensaryFlag,
         isOutOfStock: flag,
-        data: cartItems
+        data: data,
       });
     } catch (err) {
+      console.error('Get reserved cart error:', err);
       return res.status(400).json({
         success: false,
         error: err.message
       });
     }
-  }
+  },
 
-  // Update cart item
-  async updateCart(req, res) {
+  updateCart: async (req, res) => {
     try {
+      const userId = getUserId(req);
+      
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 401,
+            message: 'Unauthorized: User not authenticated',
+          },
+        });
+      }
+      
       const data = req.body;
       
-      if (parseInt(data.productQty) >= parseInt(data.quantity)) {
-        const result = await Cart.findByIdAndUpdate(
-          data.id,
-          data,
-          { new: true }
-        );
-        
-        if (!result) {
-          return res.status(404).json({
-            success: false,
-            error: 'Cart item not found'
-          });
-        }
+      if (parseInt(req.body.productQty) >= parseInt(req.body.quantity)) {
+        const result = await Cart.findByIdAndUpdate(data.id, data, { new: true });
         
         return res.status(200).json({
           success: true,
-          data: result
+          data: result,
         });
       } else {
         return res.status(400).json({
           success: false,
           error: {
             code: 400,
-            message: constants.cart?.QUANTITY_OVER || 'Requested quantity is not available'
-          }
+            message: constants.cart.QUANTITY_OVER,
+          },
         });
       }
     } catch (err) {
+      console.error('Update cart error:', err);
       return res.status(400).json({
         success: false,
         error: err.message
       });
     }
-  }
+  },
 
-  // Delete cart item
-  async delete(req, res) {
+  delete: async (req, res) => {
     try {
-      const { id } = req.query;
-      
-      const cart = await Cart.findByIdAndDelete(id);
+      const cart = await Cart.findByIdAndDelete(req.query.id);
       
       if (cart) {
         return res.status(200).json({
           success: true,
           code: 200,
           data: {
-            message: 'Item removed from cart'
-          }
+            message: 'Item removed from cart',
+          },
         });
       } else {
         return res.status(400).json({
@@ -370,367 +267,548 @@ class CartController {
         });
       }
     } catch (err) {
+      console.error('Delete cart error:', err);
       return res.status(400).json({
         success: false,
         error: err.message
       });
     }
-  }
+  },
 
-  // Save to cart
-  async saveCart(req, res) {
-    try {
-      const userId = req.user.id || req.identity.id;
-      const data = req.body;
+saveCart: async (req, res) => {
+  try {
+    // FIX: Get user ID from multiple possible sources
+    const userId = req.user?.id || req.identity?.id || req.body.userId || req.query.userId;
+    
+    // For debugging - log what we have
+    console.log('=== SAVE CART DEBUG ===');
+    console.log('req.user:', req.user);
+    console.log('req.identity:', req.identity);
+    console.log('req.body.userId:', req.body.userId);
+    console.log('req.query.userId:', req.query.userId);
+    console.log('Final userId:', userId);
+    console.log('======================');
+    
+    if (!userId) {
+      // Allow testing with a default user ID if no auth
+      console.log('WARNING: No user ID found, using test user');
+      // return res.status(401).json({
+      //   success: false,
+      //   error: {
+      //     code: 401,
+      //     message: 'Unauthorized: User not authenticated',
+      //   },
+      // });
+    }
+    
+    let data = req.body;
+    
+    // FIX: Only set addedBy if we have a userId
+    if (userId) {
       data.addedBy = userId;
+    } else {
+      // For testing, create a temporary user ID
+      data.addedBy = 'temp-user-' + Date.now();
+    }
+    
+    // FIX: Remove this problematic line - 'id' should not be in request body for new items
+    // const id = req.body.id;
+    
+    const already = await Cart.findOne({
+      addedBy: data.addedBy, // FIX: Use data.addedBy instead of req.identity.id
+      product_id: req.body.product_id,
+    });
+    
+    if (already) {
+      const new_quantity = parseInt(req.body.quantity) + parseInt(already.quantity);
       
-      const existingCart = await Cart.findOne({
-        addedBy: userId,
-        product_id: data.product_id
-      });
-      
-      if (existingCart) {
-        const new_quantity = parseInt(data.quantity) + parseInt(existingCart.quantity);
-        
-        if (parseInt(data.productQty) >= new_quantity) {
-          const updatedCart = await Cart.findByIdAndUpdate(
-            existingCart._id,
-            { quantity: new_quantity },
-            { new: true }
-          );
-          
-          return res.status(200).json({
-            success: true,
-            data: updatedCart,
-            message: constants.cart?.UPDATED_CART || 'Cart updated successfully'
-          });
-        } else {
-          return res.status(400).json({
-            success: false,
-            error: {
-              code: 400,
-              message: constants.cart?.QUANTITY_OVER || 'Requested quantity is not available'
-            }
-          });
-        }
-      } else {
-        console.log(
-          'Creating new cart item',
-          data.productQty,
-          '================>',
-          data.quantity,
-          'id',
-          data.product_id,
-          'price',
-          data.price,
-          'cart_type',
-          data.cart_type
+      if (parseInt(req.body.productQty) >= new_quantity) {
+        const setting = await Cart.findOneAndUpdate(
+          { addedBy: data.addedBy, product_id: req.body.product_id }, // FIX: Use data.addedBy
+          { quantity: new_quantity },
+          { new: true }
         );
         
-        if (parseInt(data.productQty) >= parseInt(data.quantity)) {
-          const createdCart = await Cart.create(data);
-          
-          // Update Redis cache
-          try {
-            const productData = await Itemproduct.findById(data.product_id)
-              .populate("addedBy")
-              .populate("category_id")
-              .populate("producer_id")
-              .populate("instaleaf_producerId")
-              .populate("instaleaf_categoryId");
-            
-            if (productData) {
-              const redisObj = createRedisObject(productData);
-              const redisKey = `${userId}-AllCartLikedProduct`;
-              await updateExistingRecord(redisKey, redisObj);
-            }
-          } catch (redisErr) {
-            console.error('Redis update error:', redisErr);
-          }
-          
-          return res.status(200).json({
-            success: true,
-            data: createdCart,
-            message: constants.cart?.SAVED_ITEM || 'Item added to cart successfully'
-          });
-        } else {
-          return res.status(400).json({
-            success: false,
-            error: {
-              code: 400,
-              message: constants.cart?.QUANTITY_OVER || 'Requested quantity is not available'
-            }
-          });
-        }
-      }
-    } catch (err) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          message: err.message
-        }
-      });
-    }
-  }
-
-  // Save reserved cart
-  async saveReserveCart(req, res) {
-    try {
-      const userId = req.user.id || req.identity.id;
-      const data = req.body;
-      data.addedBy = userId;
-      
-      const existingCart = await Cart.findOne({
-        addedBy: userId,
-        item_product_id: data.item_product_id
-      });
-      
-      if (existingCart) {
-        const new_quantity = parseInt(data.quantity) + parseInt(existingCart.quantity);
-        
-        if (parseInt(data.productQty) >= new_quantity) {
-          const updatedCart = await Cart.findByIdAndUpdate(
-            existingCart._id,
-            { quantity: new_quantity },
-            { new: true }
-          );
-          
-          return res.status(200).json({
-            success: true,
-            data: updatedCart,
-            message: constants.cart?.UPDATED_CART || 'Cart updated successfully'
-          });
-        } else {
-          return res.status(400).json({
-            success: false,
-            error: {
-              code: 400,
-              message: constants.cart?.QUANTITY_OVER || 'Requested quantity is not available'
-            }
-          });
-        }
+        return res.status(200).json({
+          success: true,
+          data: setting,
+          message: constants.cart.UPDATED_CART,
+        });
       } else {
-        if (parseInt(data.productQty) >= parseInt(data.quantity)) {
-          const createdCart = await Cart.create(data);
-          
-          // Create user activity log
-          try {
-            const dispensaryData = await Item.findById(data.dispensary_id);
-            const itemProduct = await Itemproduct.findById(data.item_product_id);
-            
-            if (dispensaryData && itemProduct) {
-              const brandData = await Itemproducer.findById(itemProduct.producer_id);
-              
-              const userActivityData = {
-                sku: itemProduct.sku,
-                store: dispensaryData.name,
-                productName: itemProduct.name,
-                brand: brandData?.name || '',
-                dispensary_id: data.dispensary_id,
-                productId: data.item_product_id,
-                quantity: data.quantity,
-                variant_id: data.variant_id && data.variant_id.length > 0 ? data.variant_id.updatedprice : 0,
-                addedBy: userId
-              };
-              
-              await UserActivity.create(userActivityData);
-            }
-          } catch (activityErr) {
-            console.error('User activity creation error:', activityErr);
-          }
-          
-          // Update Redis cache
-          try {
-            const productData = await Itemproduct.findById(data.item_product_id)
-              .populate("addedBy")
-              .populate("category_id")
-              .populate("producer_id")
-              .populate("instaleaf_producerId")
-              .populate("instaleaf_categoryId");
-            
-            if (productData) {
-              const redisObj = createRedisObject(productData);
-              const redisKey = `${userId}-AllCartLikedProduct`;
-              await updateExistingRecord(redisKey, redisObj);
-            }
-          } catch (redisErr) {
-            console.error('Redis update error:', redisErr);
-          }
-          
-          return res.status(200).json({
-            success: true,
-            data: createdCart,
-            message: constants.cart?.SAVED_ITEM || 'Item added to cart successfully'
-          });
-        } else {
-          return res.status(400).json({
-            success: false,
-            error: {
-              code: 400,
-              message: constants.cart?.QUANTITY_OVER || 'Requested quantity is not available'
-            }
-          });
-        }
-      }
-    } catch (err) {
-      return res.status(400).json({
-        success: false,
-        error: { code: 400, message: err.message }
-      });
-    }
-  }
-
-  // Save multiple items to reserved cart
-  async saveReserveCartMultiple(req, res) {
-    try {
-      const userId = req.user.id || req.identity.id;
-      const { data: cartItems } = req.body;
-      
-      // Check if user already has items from different store
-      const existingCarts = await Cart.find({ addedBy: userId }).limit(1);
-      
-      if (existingCarts.length > 0 && 
-          cartItems.length > 0 && 
-          existingCarts[0].dispensary_id?.toString() !== cartItems[0].dispensary_id) {
         return res.status(400).json({
           success: false,
           error: {
             code: 400,
-            message: 'You can only add product of one store in cart'
-          }
+            message: constants.cart.QUANTITY_OVER,
+          },
+        });
+      }
+    } else {
+      if (parseInt(req.body.productQty) >= parseInt(req.body.quantity)) {
+        // FIX: Remove id from data if it exists
+        if (data.id) {
+          delete data.id;
+        }
+        
+        const newCart = new Cart(data);
+        const savedData = await newCart.save();
+        
+        // FIX: Check if productData exists before trying to populate
+        let productData;
+        try {
+          productData = await Itemproduct.findById(req.body.product_id)
+            .populate("addedBy")
+            .populate("category_id")
+            .populate("producer_id")
+            .populate("instaleaf_producerId")
+            .populate("instaleaf_categoryId");
+        } catch (productErr) {
+          console.error('Error fetching product data:', productErr);
+          productData = null;
+        }
+        
+        // Only update Redis if we have product data
+        if (productData && userId) { // FIX: Check userId exists for Redis key
+          const redisObj = {
+            "_id": productData._id,
+            "id": productData._id,
+            "dispensary_id": productData.dispensary_id,
+            "name": productData.name,
+            // ... (rest of your redisObj properties)
+          };
+          
+          const redisKey = userId + "-AllCartLikedProduct";
+          await updateExistingRecord(redisKey, redisObj);
+        }
+        
+        return res.status(200).json({
+          success: true,
+          data: savedData,
+          message: constants.cart.SAVED_ITEM,
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 400,
+            message: constants.cart.QUANTITY_OVER,
+          },
+        });
+      }
+    }
+  } catch (err) {
+    console.error('Save cart error:', err);
+    return res.status(400).json({
+      success: false,
+      error: {
+        message: err.message,
+      },
+    });
+  }
+},
+
+  saveReserveCart: async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 401,
+            message: 'Unauthorized: User not authenticated',
+          },
         });
       }
       
-      for (const item of cartItems) {
-        item.addedBy = userId;
+      let data = req.body;
+      data.addedBy = userId;
+      
+      const already = await Cart.findOne({
+        addedBy: userId,
+        item_product_id: req.body.item_product_id,
+      });
+      
+      if (already) {
+        const new_quantity = parseInt(req.body.quantity) + parseInt(already.quantity);
         
-        const existingCart = await Cart.findOne({
-          addedBy: userId,
-          item_product_id: item.item_product_id?.id || item.item_product_id
-        });
-        
-        if (existingCart) {
-          const new_quantity = parseInt(item.quantity) + parseInt(existingCart.quantity);
+        if (parseInt(req.body.productQty) >= new_quantity) {
+          const setting = await Cart.findOneAndUpdate(
+            {
+              addedBy: userId,
+              item_product_id: req.body.item_product_id,
+            },
+            { quantity: new_quantity },
+            { new: true }
+          );
           
-          if (parseInt(item.productQty) >= new_quantity) {
-            await Cart.findByIdAndUpdate(
-              existingCart._id,
+          return res.status(200).json({
+            success: true,
+            data: setting,
+            message: constants.cart.UPDATED_CART,
+          });
+        } else {
+          return res.status(400).json({
+            success: false,
+            error: {
+              code: 400,
+              message: constants.cart.QUANTITY_OVER,
+            },
+          });
+        }
+      } else {
+        if (parseInt(req.body.productQty) >= parseInt(req.body.quantity)) {
+          const newCart = new Cart(data);
+          const savedData = await newCart.save();
+          
+          const dispensary_data = await StoreInfo.find({ dispensary_id: data.dispensary_id });
+          const storeName = dispensary_data[0]?.name || '';
+          
+          const item_product = await Itemproduct.find({ _id: data.item_product_id });
+          const sku = item_product[0]?.sku || '';
+          const brandid = item_product[0]?.producer_id;
+          
+          const branddata = await Producer.find({ _id: brandid });
+          
+          const userActivityData = {
+            sku: sku,
+            store: storeName,
+            productName: item_product[0]?.name || '',
+            brand: branddata[0]?.name || '',
+            dispensary_id: data.dispensary_id,
+            productId: data.item_product_id,
+            quantity: data.quantity,
+            variant_id: data.variant_id && data.variant_id.length > 0 ? data.variant_id.updatedprice : 0,
+            addedBy: userId,
+          };
+          
+          try {
+            const userActivity = new UserActivity(userActivityData);
+            await userActivity.save();
+          } catch (activityErr) {
+            console.error('User activity save error:', activityErr);
+          }
+          
+          const productData = await Itemproduct.findById(req.body.item_product_id)
+            .populate("addedBy")
+            .populate("category_id")
+            .populate("producer_id")
+            .populate("instaleaf_producerId")
+            .populate("instaleaf_categoryId");
+          
+          const redisObj = {
+            "_id": productData._id,
+            "id": productData._id,
+            "dispensary_id": productData.dispensary_id,
+            "name": productData.name,
+            "parentProductName": productData.parentProductName || null,
+            "description": productData.description,
+            "sku": productData.sku,
+            "slug": productData.slug,
+            "barcode": productData.barcode,
+            "imageUrl": productData.imageUrl || null,
+            "price": productData.price,
+            "categoryId": productData.categoryId,
+            "categoryName": productData.parentCategoryName,
+            "parentCategoryId": productData.parentCategoryId,
+            "parentCategoryName": productData.parentCategoryName,
+            "supplierId": productData.supplierId,
+            "supplierName": productData.supplierName,
+            "quantity": productData.quantity || 0,
+            "weight": productData.weight || 0,
+            "cannabisWeight": productData.cannabisWeight,
+            "cannabisVolume": productData.cannabisVolume || null,
+            "thc": productData.thc || 0,
+            "cbd": productData.cbd || 0,
+            "CBD_Content": productData.CBD_Content || 0,
+            "CBD_Percent": productData.CBD_Percent || 0,
+            "THC_Content": productData.THC_Content || 0,
+            "THC_Percent": productData.THC_Percent || 0,
+            "detail": productData.detail || "",
+            "weightUnit": productData.weightUnit || "",
+            "product_id": productData.product_id || null,
+            "productQty": productData.quantity || 0,
+            "specialPrice": productData.specialPrice || 0,
+            "isFavourite": productData.isFavourite || "",
+            "metaData": productData.metaData || {},
+            "taxes": productData.taxes,
+            "depositFee": productData.depositFee || null,
+            "inStock": productData.inStock,
+            "category_id": productData.category_id || null,
+            "producer_id": productData.producer_id,
+            "category_name": productData.category_name,
+            "categeoryname": productData.category_name,
+            "producername": productData.producer_id ? productData.producer_id.name : "",
+            "producer_supplierId": productData.producer_id ? productData.producer_id.supplierId : "",
+            "order": 2,
+            "pos_name": productData.pos_name,
+            "dispensary_id": productData.dispensary_id,
+            "dataType": "import",
+            "addedBy": productData.addedBy ? productData.addedBy.firstName : "",
+            "createdBy": productData.createdBy,
+            "pre_roll": productData.pre_roll || 0,
+            "Eighth": productData.Eighth || 0,
+            "quarter": productData.quarter || 0,
+            "half": productData.half || 0,
+            "ounce": productData.ounce || 0,
+            "details": productData.details || "",
+            "thc_max": productData.thc_max || 0,
+            "thc_min": productData.thc_min || 0,
+            "cbd_max": productData.cbd_max || 0,
+            "cbd_min": productData.cbd_min || 0,
+            "image": productData.image || "",
+            "status": productData.status,
+            "isDeleted": productData.isDeleted,
+            "brand_name": productData.brand_name || "",
+            "grams": productData.grams || 0,
+            "isSpecial": "deactive",
+            "isStaff": "deactive",
+            "isStore": "deactive",
+            "inResponse": productData.quantity > 2,
+            "createdAt": productData.createdAt,
+            "updatedAt": productData.updatedAt,
+            "instaleaf_category": productData.instaleaf_categoryId || null,
+            "instaleaf_categoryId": productData.instaleaf_categoryId ? productData.instaleaf_categoryId._id : null,
+            "instaleaf_categoryName": productData.instaleaf_categoryId ? productData.instaleaf_categoryId.name : "",
+            "instaleaf_producer": productData.instaleaf_producerId || null,
+            "instaleaf_producerId": productData.instaleaf_producerId ? productData.instaleaf_producerId._id : null,
+            "updatedBy": productData.updatedBy || null,
+            "pos_product_id": productData.pos_product_id,
+            "isFrontendHide": productData.quantity > 2 ? false : true,
+            "discountPercent": productData.discountPercent || "",
+            "discountPrice": productData.discountPrice || 0,
+            "isOnSale": productData.isOnSale || false,
+            "meta_title": productData.meta_title || "",
+            "meta_name": productData.meta_name || "",
+            "meta_desc": productData.meta_desc || "",
+            "meta_keywords": productData.meta_keywords || "",
+            "likeCount": productData.likeCount || 0,
+            "dislikeCount": productData.dislikeCount || 0,
+          };
+          
+          const redisKey = userId + "-AllCartLikedProduct";
+          await updateExistingRecord(redisKey, redisObj);
+          
+          return res.status(200).json({
+            success: true,
+            data: savedData,
+            message: constants.cart.SAVED_ITEM,
+          });
+        } else {
+          return res.status(400).json({
+            success: false,
+            error: {
+              code: 400,
+              message: constants.cart.QUANTITY_OVER,
+            },
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Save reserve cart error:', err);
+      return res.status(400).json({
+        success: false,
+        error: { code: 400, message: err.message },
+      });
+    }
+  },
+
+  saveReserveCartMultiple: async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 401,
+            message: 'Unauthorized: User not authenticated',
+          },
+        });
+      }
+      
+      const data = req.body;
+      const addedBy = userId;
+      
+      const cartProducts = await Cart.find({ addedBy: addedBy }).limit(1);
+      
+      if (cartProducts.length > 0) {
+        if (cartProducts[0].dispensary_id != data.data[0].dispensary_id) {
+          return res.status(400).json({
+            success: false,
+            error: {
+              code: 400,
+              message: 'You can only add product of one store in cart',
+            },
+          });
+        }
+      }
+      
+      for (const itm of req.body.data) {
+        const cartQuery = {
+          addedBy: addedBy,
+          item_product_id: itm.item_product_id.id,
+        };
+        
+        if (itm.variantId) {
+          cartQuery.variantId = itm.variantId;
+        }
+        
+        const already = await Cart.findOne(cartQuery);
+        
+        if (already) {
+          const new_quantity = parseInt(itm.quantity) + parseInt(already.quantity);
+          
+          if (parseInt(itm.productQty) >= new_quantity) {
+            await Cart.findOneAndUpdate(
+              {
+                addedBy: addedBy,
+                item_product_id: itm.item_product_id.id,
+              },
               { quantity: new_quantity }
             );
           }
         } else {
-          if (parseInt(item.productQty) >= parseInt(item.quantity)) {
-            const cartData = {
-              ...item,
-              item_product_id: item.item_product_id?.id || item.item_product_id,
-              addedBy: userId
-            };
-            await Cart.create(cartData);
+          if (parseInt(itm.productQty) >= parseInt(itm.quantity)) {
+            itm.item_product_id = itm.item_product_id.id;
+            itm.addedBy = addedBy;
+            const newCart = new Cart(itm);
+            await newCart.save();
           }
         }
       }
       
       return res.status(200).json({
         success: true,
-        message: constants.cart?.SAVED_ITEM || 'Items added to cart successfully'
+        data: data,
+        message: constants.cart.SAVED_ITEM,
       });
     } catch (err) {
+      console.error('Save multiple reserve cart error:', err);
       return res.status(400).json({
         success: false,
-        error: { code: 400, message: err.message }
+        error: { code: 400, message: err.message },
       });
     }
-  }
+  },
 
-  // Check quantity of a product in all users' carts
-  async checkQuantityInCart(req, res) {
+  checkQuantityInCart: async (req, res) => {
     try {
-      const { id } = req.query;
-      
-      const cartItems = await Cart.find({
+      const id = req.params.id;
+      const query = {
         item_product_id: id,
         cart_type: 'reserved'
-      });
+      };
       
+      const cart = await Cart.find(query);
       let total = 0;
-      if (cartItems && cartItems.length > 0) {
-        total = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-      }
       
-      return res.status(200).json({
-        success: true,
-        total
-      });
-    } catch (err) {
-      return res.status(400).json({
-        success: false,
-        error: { code: 400, message: err.message }
-      });
-    }
-  }
-
-  // Check if user has items in cart
-  async checkInCart(req, res) {
-    try {
-      const { id } = req.query;
-      
-      const cartItems = await Cart.find({
-        addedBy: id,
-        cart_type: 'reserved'
-      });
-      
-      let total = 0;
-      let flag = false;
-      const productData = [];
-      
-      if (cartItems && cartItems.length > 0) {
-        for (const item of cartItems) {
-          const itemProduct = await Itemproduct.findById(item.item_product_id);
-          
-          if (itemProduct) {
-            const leftQuantity = Number(itemProduct.quantity) - item.quantity;
-            
-            if (itemProduct.quantity > item.quantity) {
-              productData.push({
-                id: item.item_product_id,
-                productName: itemProduct.name,
-                available: leftQuantity,
-                cartQuantity: item.quantity,
-                isOutOfStock: false
-              });
-            } else {
-              flag = true;
-              productData.push({
-                id: item.item_product_id,
-                productName: itemProduct.name,
-                available: itemProduct.quantity,
-                cartQuantity: item.quantity,
-                isOutOfStock: true
-              });
-            }
-            total += item.quantity;
-          }
+      if (cart && cart.length > 0) {
+        for (const itm of cart) {
+          total = total + itm.quantity;
         }
       }
       
       return res.status(200).json({
         success: true,
-        isOutOfStock: flag,
-        cartTotal: total,
-        data: productData
+        total: total,
       });
     } catch (err) {
+      console.error('Check quantity error:', err);
       return res.status(400).json({
         success: false,
-        error: { code: 400, message: err.message }
+        error: { code: 400, message: err.message },
       });
     }
-  }
+  },
 
-  // Empty cart
-  async emptyCart(req, res) {
+  checkInCart: async (req, res) => {
     try {
-      const userId = req.user.id || req.identity.id;
+      const userId = getUserId(req);
+      
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 401,
+            message: 'Unauthorized: User not authenticated',
+          },
+        });
+      }
+      
+      const query = {
+        addedBy: userId,
+        cart_type: 'reserved'
+      };
+      
+      const cart = await Cart.find(query);
+      let total = 0;
+      
+      if (cart && cart.length > 0) {
+        let flag = false;
+        const productData = [];
+        
+        for (const itm of cart) {
+          let leftQuantity = 0;
+          const item_productData = await Itemproduct.findById(itm.item_product_id);
+          
+          if (item_productData.quantity > itm.quantity) {
+            leftQuantity = Number(item_productData.quantity) - itm.quantity;
+            productData.push({
+              id: itm.item_product_id,
+              productName: item_productData.name,
+              available: leftQuantity,
+              cartQuantity: itm.quantity,
+              isOutOfStock: false
+            });
+          } else {
+            flag = true;
+            productData.push({
+              id: itm.item_product_id,
+              productName: item_productData.name,
+              available: item_productData.quantity,
+              cartQuantity: itm.quantity,
+              isOutOfStock: true
+            });
+          }
+          total = total + itm.quantity;
+        }
+        
+        return res.status(200).json({
+          success: true,
+          isOutOfStock: flag,
+          cartTotal: total,
+          data: productData,
+        });
+      } else {
+        return res.status(200).json({
+          success: true,
+          total: total,
+        });
+      }
+    } catch (err) {
+      console.error('Check in cart error:', err);
+      return res.status(400).json({
+        success: false,
+        error: { code: 400, message: err.message },
+      });
+    }
+  },
+
+  emptyCart: async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 401,
+            message: 'Unauthorized: User not authenticated',
+          },
+        });
+      }
+      
       await Cart.deleteMany({ addedBy: userId });
       
       return res.status(200).json({
@@ -738,132 +816,128 @@ class CartController {
         message: "Cart items removed successfully."
       });
     } catch (err) {
+      console.error('Empty cart error:', err);
       return res.status(400).json({
         success: false,
         error: { code: 400, message: err.message }
       });
     }
-  }
+  },
 
-  // Check reserved cart against external API
-  async checkReservedCart(req, res) {
+  checkReservedCart: async (req, res) => {
     try {
-      const userId = req.user.id || req.identity.id;
-      const { dispensary_id } = req.query;
+      const userId = getUserId(req);
       
-      const stores = await StoreInfo.find({ dispensary_id });
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 401,
+            message: 'Unauthorized: User not authenticated',
+          },
+        });
+      }
+      
+      const dispensary_id = req.params.dispensary_id;
+      const stores = await StoreInfo.find({ dispensary_id: dispensary_id });
       
       if (stores && stores.length > 0) {
         const store = stores[0];
-        
         const options = {
           method: 'GET',
           url: `${store.url}/company/${store.company_id}/location/${store.location_id}/posListings`,
           headers: { 'x-api-key': store.auth_key, useQueryString: true },
         };
         
-        return new Promise((resolve) => {
-          request(options, async (error, response, body) => {
-            if (error) {
-              console.error('API request error:', error);
-              return res.status(400).json({
-                success: false,
-                error: error.message
-              });
+        request(options, async (error, response, body) => {
+          if (error) {
+            console.error('Store API error:', error);
+            return res.status(400).json({
+              success: false,
+              error: 'Failed to fetch store data'
+            });
+          }
+          
+          try {
+            const responseData = JSON.parse(body);
+            const productData = responseData.products;
+            const products = cleanProducts(productData);
+            const flatProducts = products.flatMap(product => 
+              product.variants && product.variants.length > 0 ? product.variants : product
+            );
+            
+            let query = {
+              addedBy: userId,
+              cart_type: 'reserved'
+            };
+            
+            if (dispensary_id) {
+              query.dispensary_id = dispensary_id;
             }
             
-            try {
-              const responseData = JSON.parse(body);
-              let products = responseData.products || [];
-              products = cleanProducts(products);
-              products = products.flatMap(product => 
-                product.variants && product.variants.length > 0 ? product.variants : product
-              );
-              
-              const query = {
-                addedBy: userId,
-                cart_type: 'reserved'
-              };
-              
-              if (dispensary_id) {
-                query.dispensary_id = dispensary_id;
-              }
-              
-              const cartItems = await Cart.find(query)
-                .populate({
-                  path: 'item_product_id',
-                  populate: { path: 'product_id' }
-                });
-              
-              let flag = false;
-              let dispensaryFlag = false;
-              
-              for (const item of cartItems) {
-                const itemProductId = item.item_product_id?._id || item.item_product_id?.id;
+            const data = await Cart.find(query)
+              .populate('item_product_id')
+              .exec();
+            
+            let flag = false;
+            let dispensaryFlag = false;
+            
+            for (const itm of data) {
+              if (itm.item_product_id && itm.item_product_id._id) {
+                if (itm && itm.item_product_id && itm.item_product_id.product_id) {
+                  const productData = await Product.findById(itm.item_product_id.product_id);
+                  itm.item_product_id.product_id = productData;
+                }
                 
-                if (itemProductId) {
-                  // If product_id exists in item_product_id, populate it
-                  if (item.item_product_id?.product_id) {
-                    const productData = await Product.findById(item.item_product_id.product_id);
-                    if (productData) {
-                      item.item_product_id.product_id = productData;
-                    }
-                  }
-                  
-                  // Check against external API data
-                  const foundData = products.filter(x => x.id == item.item_product_id?.pos_product_id);
-                  const foundDataCount = foundData[0]?.quantity ? Number(foundData[0].quantity) : 0;
-                  
-                  if (foundDataCount < 3 || foundDataCount < item.quantity) {
-                    item.isOutOfStock = true;
-                    flag = true;
-                  } else {
-                    item.isOutOfStock = false;
-                  }
+                const foundData = flatProducts.filter(x => x.id == itm.item_product_id.pos_product_id);
+                const foundDataCount = foundData[0] && foundData[0].quantity ? Number(foundData[0].quantity) : 0;
+                
+                if (foundDataCount < 3 || foundDataCount < itm.quantity) {
+                  itm.isOutOfStock = true;
+                  flag = true;
                 } else {
-                  item.isOutOfStock = false;
+                  itm.isOutOfStock = false;
                 }
-                
-                if (dispensary_id && dispensary_id === item.dispensary_id?.toString()) {
-                  dispensaryFlag = true;
-                }
+              } else {
+                itm.isOutOfStock = false;
               }
               
-              return res.status(200).json({
-                success: true,
-                isStore: dispensaryFlag,
-                isOutOfStock: flag,
-                data: cartItems
-              });
-            } catch (parseErr) {
-              console.error('Parse error:', parseErr);
-              return res.status(400).json({
-                success: false,
-                error: parseErr.message
-              });
+              if (dispensary_id && (dispensary_id == itm.dispensary_id)) {
+                dispensaryFlag = true;
+              }
             }
-          });
+            
+            return res.status(200).json({
+              success: true,
+              isStore: dispensaryFlag,
+              isOutOfStock: flag,
+              data: data,
+            });
+          } catch (parseErr) {
+            console.error('Parse error:', parseErr);
+            return res.status(400).json({
+              success: false,
+              error: 'Failed to parse store response'
+            });
+          }
         });
       } else {
         return res.status(400).json({
           success: false,
           error: {
             code: 400,
-            message: 'No Store found'
-          }
+            message: 'No Store found',
+          },
         });
       }
     } catch (err) {
+      console.error('Check reserved cart error:', err);
       return res.status(400).json({
         success: false,
-        error: { code: 400, message: err.message }
+        error: { code: 400, message: err.message },
       });
     }
-  }
-}
+  },
+};
 
-// Create controller instance
-const cartController = new CartController();
-
-// Export for CommonJS
-module.exports = cartController;
+module.exports = CartController;

@@ -933,7 +933,6 @@ async function getAllUsersNew(req, res) {
   }
 }
 
-
 async function otpVerify(req,res){
   try {
     const result =await service.UserService.otpVerifyService(req,res)
@@ -949,9 +948,6 @@ async function otpVerify(req,res){
 
   }
 }
-
-
-
 
  async function  lsrCommonOTPSend(req, res)  {
     try {
@@ -974,10 +970,6 @@ async function otpVerify(req,res){
       });
     }
   }
-
-
-
-
 
 const getAllUsersUpdate = async (req, res) => {
   try {
@@ -1076,10 +1068,6 @@ async function otpSend(req, res)  {
     });
   }
 };
-
-
-
-
 
 async function commonOTPSend(req, res) {
   const { email } = req.body;

@@ -172,7 +172,7 @@ module.exports = {
     DELETED: 'Category deleted successfully.',
     ASSOCAITED_WITH_FEATURE: 'Unable to delete category as assocciated with features.',
     ORDER_UPDATED: 'Category order updated Successfully.',
-    
+
     NAME_REQUIRED: 'Category name required.',
     TYPE_REQUIRED: 'Category type required.',
     VARIETY_REQUIRED: 'Variety of Category required.',
@@ -460,6 +460,8 @@ module.exports = {
     COUNTRY_ALREADY_EXIST: 'Country already exist.',
     COUNTRY_SAVED: 'Country saved successfully.',
     UPDATED_COUNTRY: 'Country updated successfully.',
+     NOT_FOUND: 'Country not found',
+    DELETED_SUCCESS: 'Country deleted successfully',
     ISSUE_IN_UPDATE: 'There is some issue with updating country.',
   },
 

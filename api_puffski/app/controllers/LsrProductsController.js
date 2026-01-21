@@ -56,7 +56,6 @@ const getUniqueCategoriesAndSubcategories = (products) => {
 };
 
 module.exports = {
-    // Save product
     save: async (req, res) => {
         try {
             const User = require('../models/users');
@@ -115,7 +114,6 @@ module.exports = {
         }
     },
 
-    // Delete product 
     delete: async (req, res) => {
         try {
             const data = { id: req.params.id };
@@ -135,7 +133,6 @@ module.exports = {
         }
     },
 
-    // Get single product
     getProduct: async (req, res) => {
         try {
             const result = await LsrProductService.getProductById(req.params.id);
@@ -154,7 +151,6 @@ module.exports = {
         }
     },
 
-    // Get all products
     getAllProduct: async (req, res) => {
         try {
             const search = req.query.search;

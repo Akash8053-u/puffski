@@ -1,4 +1,3 @@
-// models/ReserveOrder.js
 const mongoose = require("mongoose");
 
 const ReserveOrderSchema = new mongoose.Schema(
@@ -67,7 +66,7 @@ const ReserveOrderSchema = new mongoose.Schema(
     type: { type: String },
     productNames: { type: String },
   },
-  { timestamps: true, versionKey: false } // replaces autoCreatedAt and autoUpdatedAt
+  { timestamps: true, versionKey: false } 
 );
 
 module.exports = mongoose.model("ReserveOrder", ReserveOrderSchema);

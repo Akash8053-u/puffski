@@ -93,7 +93,7 @@ exports.categoryByType = async (req, res, next) => {
     });
   } catch (err) {
     console.error(err);
-    next(err); // pass to Express error handler
+    next(err); 
   }
 };
 

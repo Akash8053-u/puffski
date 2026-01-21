@@ -1,12 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const CommonController = require('../controllers/CommonController');
+const CsvExportController = require('../controllers/CsvExportController.js');
 const cartController = require('../controllers/cartController');
+const CountryController = require('../controllers/CountryController');
+const CouponController = require('../controllers/CouponController.js');
+const CultivatorsController = require('../controllers/CultivatorsController.js')
 // const { authenticate, authorize } = require('../middleware/authmiddleware');
-const upload = require('../middleware/upload');
+
 
 // ==================== PUBLIC ROUTES ====================
-
+// ===================COMMON ROUTES ===========
 // Location & Address Routes
 router.get('/getlocation', CommonController.onLoadLocation);
 router.get('/updateCityLatlang', CommonController.updateCityLatlang);
@@ -117,5 +121,64 @@ router.put('/update-cart', cartController.updateCart);
 // DELETE routes
 router.delete('/delete-cart', cartController.delete);
 router.delete('/destroy-cart', cartController.emptyCart);
+
+
+// Get all countries (public access)
+router.get('/country', CountryController.getAllCountry);
+router.get('/allcountry', CountryController.getCountryList);
+router.get('/type/:type', CountryController.getCountriesByType);
+router.get('/allcountry/:id', CountryController.singleCountry);
+
+// router.post('/', authorize(['admin', 'superadmin']), CountryController.save);
+router.post('/country', CountryController.save);
+
+// Update country (Admin only)
+// router.put('/:id', authorize(['admin', 'superadmin']), CountryController.update);
+router.put('/country/:id',  CountryController.update);
+
+// Delete country (Admin only)
+// router.delete('/:id', authorize(['admin', 'superadmin']), CountryController.delete);
+router.delete('/deletecountry/:id', CountryController.delete);
+
+// For mobile app compatibility (similar to your existing routes)
+router.get('/all/country', CountryController.getAll);
+router.get('/single/country/:id', CountryController.singleCountry);
+
+//===== EXCEL EXPORT ROUTES===
+router.get('/date/userExcel', CsvExportController.webdateuserExcel);
+router.get('/webUserExcel', CsvExportController.webUserExcel);
+router.get('/oneorder/user', CsvExportController.oneOrderUser);
+router.get('/all/active-user', CsvExportController.activeUsers);
+router.get('/appUserExcel', CsvExportController.appUserExcel);
+
+router.get('/deliveredOrderExcel', CsvExportController.delieveredOrderExcel);
+router.get('/reserveOrderExcel', CsvExportController.reserveOrderExcel);
+router.get('/grossMargin/orderExcel', CsvExportController.grossMarginOrderExcel);
+
+router.get('/favExcel', CsvExportController.favExcel);
+router.get('/reviewExcel', CsvExportController.reviewExcel);
+
+router.get('/websiteViewExcel', CsvExportController.websiteView);
+router.get('/appDownloadExcel', CsvExportController.appDownloadExcel);
+router.get('/appViewExcel', CsvExportController.appViewExcel);
+router.get('/salesExcel', CsvExportController.salesExcel);
+
+router.get('/productExcel', CsvExportController.productsExcel);
+router.get('/normalProductsExcel', CsvExportController.normalProductsExcel);
+router.get('/updatedProductsExcel', CsvExportController.updatedProductsExcel);
+router.get('/export/products', CsvExportController.productsExcelAdmin);
+
+router.get('/export/stores', CsvExportController.exportAllItems);
+
+// ==================== COUPON ROUTES ====================
+router.get('/check_coupon', CouponController.checkCoupon);
+router.post('/save_coupon', CouponController.saveCoupon);
+
+
+// ==================== CULTIVATORS ROUTES ========
+router.post('/cultivator', CultivatorsController.addCultivators);
+router.get('/cultivator', CultivatorsController.cultivatorDetail);
+router.put('/cultivator', CultivatorsController.updateCultivator);
+router.get('/cultivators', CultivatorsController.clutivatorsListing);
 
 module.exports = router;

@@ -1,4 +1,3 @@
-// models/StoreInfo.js
 const mongoose = require('mongoose');
 const mongoosePaginate = require('mongoose-paginate-v2');
 
@@ -35,29 +34,23 @@ const storeInfoSchema = new mongoose.Schema({
         default: null
     }
 }, {
-    timestamps: true, // Auto creates createdAt and updatedAt fields
+    timestamps: true, 
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
 });
 
-// Add indexes for better performance
-storeInfoSchema.index({ dispensary_id: 1 }, { unique: true }); // One store info per dispensary
+storeInfoSchema.index({ dispensary_id: 1 }, { unique: true }); 
 storeInfoSchema.index({ pos_name: 1 });
 storeInfoSchema.index({ company_id: 1 });
 storeInfoSchema.index({ location_id: 1 });
 storeInfoSchema.index({ updatedByCron: 1 });
 
-// Add compound indexes for API queries
 storeInfoSchema.index({ company_id: 1, location_id: 1 });
 
-// Add pagination plugin
 storeInfoSchema.plugin(mongoosePaginate);
 
-// Virtual for full API URL (if needed)
 storeInfoSchema.virtual('fullApiUrl').get(function() {
     if (!this.api_url) return null;
-    
-    // Add company and location to URL if not already present
     let url = this.api_url;
     if (this.company_id && this.location_id && !url.includes('/company/')) {
         url = `${url}/company/${this.company_id}/location/${this.location_id}`;
@@ -65,7 +58,6 @@ storeInfoSchema.virtual('fullApiUrl').get(function() {
     return url;
 });
 
-// Virtual for authentication headers
 storeInfoSchema.virtual('authHeaders').get(function() {
     const headers = {};
     
@@ -80,7 +72,6 @@ storeInfoSchema.virtual('authHeaders').get(function() {
     return headers;
 });
 
-// Static methods
 storeInfoSchema.statics.findByDispensary = function(dispensaryId) {
     return this.findOne({ dispensary_id: dispensaryId });
 };
@@ -94,7 +85,6 @@ storeInfoSchema.statics.findByPosName = function(posName) {
 };
 
 storeInfoSchema.statics.findNeedsCronUpdate = function() {
-    // Find stores that haven't been updated by cron in the last 24 hours
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     return this.find({
         $or: [
@@ -103,8 +93,6 @@ storeInfoSchema.statics.findNeedsCronUpdate = function() {
         ]
     });
 };
-
-// Instance methods
 storeInfoSchema.methods.updateCronTimestamp = function() {
     this.updatedByCron = new Date();
     return this.save();
@@ -130,7 +118,7 @@ storeInfoSchema.methods.testConnection = async function() {
         
         const response = await axios.get(testUrl, {
             headers: this.authHeaders,
-            timeout: 5000 // 5 second timeout
+            timeout: 5000 
         });
         
         return {
@@ -158,7 +146,7 @@ storeInfoSchema.methods.getProducts = async function() {
         
         const response = await axios.get(productsUrl, {
             headers: this.authHeaders,
-            timeout: 10000 // 10 second timeout
+            timeout: 10000 
         });
         
         return {
@@ -176,15 +164,11 @@ storeInfoSchema.methods.getProducts = async function() {
     }
 };
 
-// Pre-save middleware for validation
 storeInfoSchema.pre('save', function(next) {
-    // Ensure URLs are properly formatted
     if (this.isModified('api_url') && this.api_url) {
-        // Remove trailing slashes
         this.api_url = this.api_url.replace(/\/+$/, '');
     }
     
-    // Trim string fields
     if (this.isModified('pos_name')) {
         this.pos_name = this.pos_name.trim();
     }
@@ -201,7 +185,6 @@ storeInfoSchema.pre('save', function(next) {
         this.auth_token = this.auth_token?.trim();
     }
     
-    // Validate that either auth_key/auth_value OR auth_token is provided
     if (this.isModified('auth_key') || this.isModified('auth_value') || this.isModified('auth_token')) {
         const hasKeyValue = this.auth_key && this.auth_value;
         const hasToken = this.auth_token;
@@ -214,18 +197,15 @@ storeInfoSchema.pre('save', function(next) {
     next();
 });
 
-// Post-save middleware
 storeInfoSchema.post('save', function(doc) {
     console.log(`StoreInfo for ${doc.pos_name} saved/updated for dispensary: ${doc.dispensary_id}`);
 });
 
-// Pre-remove middleware
 storeInfoSchema.pre('remove', function(next) {
     console.log(`StoreInfo for ${this.pos_name} is being removed`);
     next();
 });
 
-// Check if model already exists to prevent overwrite errors
 const StoreInfo = mongoose.models.StoreInfo || mongoose.model('StoreInfo', storeInfoSchema);
 
 module.exports = StoreInfo;

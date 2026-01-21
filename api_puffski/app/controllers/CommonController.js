@@ -768,7 +768,7 @@ class CommonController {
         query.name = new RegExp(name, 'i');
       }
 
-      const Item = require('../models/Item');
+      const Item = require('../models/item');
       const items = await Item.find(query).populate('addedBy').exec();
       
       const responseStore = [];
@@ -787,7 +787,7 @@ class CommonController {
 
       responseStore.sort((a, b) => a.kilometers - b.kilometers);
 
-      const Product = require('../models/Product');
+      const Product = require('../models/product');
       const products = await Product.find({
         isDeleted: false,
         name: new RegExp(name, 'i')
@@ -836,7 +836,6 @@ class CommonController {
         });
       }
 
-      // Send email notification
       const nodemailer = require('nodemailer');
       const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
@@ -1163,10 +1162,7 @@ class CommonController {
           product_id: '$product_id',
         };
       }
-      
-      // Implement your analytic functions here
-      // totalFavourite, totalWebVisit, totalProductViewed, totalReview, totalItemProductReviews
-      
+          
       return res.json({
         data: {
           fav: { totalresults: [] },
@@ -1384,15 +1380,13 @@ class CommonController {
 
   async getproductslugupdate(req, res) {
     try {
-      // This function checks for duplicate slugs
-      const Product = require('../models/Product');
+     const Product = require('../models/Product');
       const products = await Product.find({
         isDeleted: false,
         status: 'active',
         dataType: { $ne: 'import' },
       });
       
-      // Check for duplicate slugs
       const slugMap = new Map();
       for (const product of products) {
         if (slugMap.has(product.slug)) {
@@ -1473,9 +1467,7 @@ class CommonController {
 
   async uploadProductFromExcel(req, res) {
     try {
-      // This is a complex function - you'll need to implement file upload handling
-      // and Excel parsing similar to your Sails code
-      console.log('Product upload from Excel endpoint - implement file upload');
+            console.log('Product upload from Excel endpoint - implement file upload');
       
       return res.json({
         success: true,
@@ -1571,8 +1563,7 @@ class CommonController {
     }
   }
 
-  // Store-specific methods (silverSpring, copper, etc.)
-  async silverSpring(req, res) {
+   async silverSpring(req, res) {
     try {
       const options = {
         method: 'GET',
@@ -1630,11 +1621,8 @@ class CommonController {
     }
   }
 
-  // Similar methods for ogden, bow, recordHigh, highlandbuds, vibes
-
   async uploadAGLCProductFromExcel(req, res) {
     try {
-      // Implement AGLC product upload similar to uploadProductFromExcel
       console.log('AGLC product upload from Excel endpoint');
       
       return res.json({
@@ -1652,7 +1640,6 @@ class CommonController {
 
   async uploadAGLCShopProductFromExcel(req, res) {
     try {
-      // Implement AGLC shop product upload
       console.log('AGLC shop product upload from Excel endpoint');
       
       return res.json({
@@ -1670,7 +1657,6 @@ class CommonController {
 
   async uploadChinookProductFromExcel(req, res) {
     try {
-      // Implement Chinook product upload
       console.log('Chinook product upload from Excel endpoint');
       
       return res.json({
@@ -1688,7 +1674,6 @@ class CommonController {
 
   async uploadCityProductFromExcel(req, res) {
     try {
-      // Implement city product upload
       console.log('City product upload from Excel endpoint');
       
       return res.json({
@@ -1732,7 +1717,6 @@ class CommonController {
     }
   }
 
-  // Helper methods for image handling
   async handleImageUpload(req, res, source = 'web') {
     const { type, fileName, data } = req.body;
     
@@ -1772,7 +1756,7 @@ class CommonController {
     }
     
     const size = Buffer.byteLength(data, 'base64');
-    if (size > 10737418) { // ~10MB
+    if (size > 10737418) {
       return res.status(400).json({
         success: false,
         error: {
@@ -1803,7 +1787,6 @@ class CommonController {
     const imagePath = `/images/${type}/${fullPath}`;
     const uploadLocation = `assets/images/${type}/${fullPath}`;
     
-    // Create directories
     await fs.ensureDir(`assets/images/${type}`);
     await fs.ensureDir(`assets/images/${type}/thumbnail/200`);
     await fs.ensureDir(`assets/images/${type}/thumbnail/300`);
@@ -1811,7 +1794,6 @@ class CommonController {
     
     await fs.writeFile(uploadLocation, imageBuffer.data);
     
-    // Create thumbnails
     const imageData = await fs.readFile(uploadLocation);
     
     await sharp(imageData)
@@ -1866,7 +1848,6 @@ class CommonController {
       const imagePath = `/images/${modelName}/${fullPath}`;
       const uploadLocation = `assets/images/${modelName}/${fullPath}`;
       
-      // Create directories
       await fs.ensureDir(`assets/images/${modelName}`);
       await fs.ensureDir(`assets/images/${modelName}/thumbnail/200`);
       await fs.ensureDir(`assets/images/${modelName}/thumbnail/300`);
@@ -1874,10 +1855,8 @@ class CommonController {
       
       await fs.writeFile(uploadLocation, imageBuffer.data);
       
-      // Read the file for thumbnail generation
       const data = await fs.readFile(uploadLocation);
       
-      // Generate thumbnails
       await sharp(data)
         .resize({ height: 200, width: 200 })
         .toFile(`assets/images/${modelName}/thumbnail/200/${fullPath}`);

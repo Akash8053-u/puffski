@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-// Import models
 const User = require('./users');
 const Favourite = require('./Favourite');
 const UpdatedPassword = require('./UpdatedPassword');

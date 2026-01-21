@@ -8,7 +8,7 @@ const userLoginSchema = new mongoose.Schema(
     },
    device_type: {
   type: String,
-  enum: ["Android", "IOS", "Web"],   // ADD THIS
+  enum: ["Android", "IOS", "Web"], 
   required: true
 },
 
@@ -19,7 +19,7 @@ const userLoginSchema = new mongoose.Schema(
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User', // Reference to Users collection
+      ref: 'User', 
       required: true,
     },
     access_token: {
