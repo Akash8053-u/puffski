@@ -8,7 +8,7 @@ const { sendUserVerificationEmail, sendVerifyRequestEmail } = require("../Emails
 const { sendQuestion, addStrainEmail } = require("../Emails/questionEmail.js");
 const validations = require("../Validations/index");
 const db = require("../models/index.js");
-const services = require("../services/index");
+
 const service = require("../services/index");
 const {
   updateUserService,
@@ -18,8 +18,65 @@ const constants = require("../utils/constants.js");
 
 async function register(req, res) {
   try {
+    console.log('Registration request received');
+    console.log('Request body:', req.body);
+    console.log('Request headers:', req.headers['content-type']);
+    
+    // Check if request body exists
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 400, message: 'Request body is empty or missing' }
+      });
+    }
+    
+    // Validate required fields
+    const requiredFields = ['email', 'password'];
+    const missingFields = requiredFields.filter(field => !req.body[field]);
+    
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: { 
+          code: 400, 
+          message: `Missing required fields: ${missingFields.join(', ')}` 
+        }
+      });
+    }
+    
+    // Trim and validate email
+    const email = req.body.email ? req.body.email.trim() : '';
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 400, message: 'Valid email is required' }
+      });
+    }
+    
+    // Validate password
+    const password = req.body.password ? req.body.password.trim() : '';
+    if (!password || password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 400, message: 'Password must be at least 6 characters' }
+      });
+    }
+    
+    // Prepare registration data
+    const registrationData = {
+      email: email.toLowerCase(),
+      password: password,
+      username1: req.body.username1 ? req.body.username1.trim().toLowerCase() : email.toLowerCase(),
+      username: req.body.username ? req.body.username.trim().toLowerCase() : email.toLowerCase(),
+      roles: req.body.roles || 'U',
+      // Add other fields if needed
+      ...req.body
+    };
+    
+    console.log('Processed registration data:', registrationData);
+    
     // Call service to register user
-    const result = await service.UserService.registerUser(req.body);
+    const result = await service.UserService.registerUser(registrationData);
 
     if (!result.success) {
       return res.status(result.error.code || 400).json(result);
@@ -35,7 +92,6 @@ async function register(req, res) {
         );
       } catch (emailErr) {
         console.warn("Email failed to send:", emailErr.message);
-        // You can optionally log the email failure in DB
       }
     }
 
@@ -43,10 +99,10 @@ async function register(req, res) {
     return res.status(200).json(result);
   } catch (err) {
     console.error("registerUser error:", err);
+    console.error("Error stack:", err.stack);
 
     // Only send error response if headers not already sent
     if (!res.headersSent) {
-      console.error("Register Controller Error:", err);
       return res.status(500).json({
         success: false,
         error: { code: 500, message: "Internal Server Error" },

@@ -2,16 +2,6 @@ const LsrCategory = require('../models/lsrCategory');
 const { constants } = require('../utils/constants');
 const { ObjectId } = require('mongodb');
 
-//added constents additional 
-const fallbackConstants = {
-    category: {
-        NAME_REQUIRED: 'Category name required.',
-        CATEGORY_ALREADY_EXIST: 'Category already exist.',
-        CATEGORY_SAVED: 'Category saved successfully.',
-        UPDATED_CATEGORY: 'Category updated successfully.',
-        ISSUE_IN_UPDATE: 'There is some issue with updating category.'
-    }
-};
 
 class LsrCategoryService {
     static async saveCategory(data, context) {
@@ -20,7 +10,8 @@ class LsrCategoryService {
                 success: false,
                 error: {
                     code: 404,
-                    message: constants.category.NAME_REQUIRED
+                
+                    message: 'Category name is required'
                 }
             };
         }
@@ -28,6 +19,7 @@ class LsrCategoryService {
         const query = {
             isDeleted: false,
             name: data.name,
+            addedBy: data.addedBy,
             status: "active"
         };
 
@@ -38,7 +30,8 @@ class LsrCategoryService {
                     success: false,
                     error: {
                         code: 400,
-                        message: constants.category.CATEGORY_ALREADY_EXIST
+                        message: 'Category already exists'
+                        
                     }
                 };
             }
@@ -47,7 +40,10 @@ class LsrCategoryService {
             return {
                 success: true,
                 code: 200,
-                data: { category, message: constants.category.CATEGORY_SAVED }
+                data: { category, 
+                    message: 'Category created successfully'
+                     
+                }
             };
         } catch (error) {
             return {

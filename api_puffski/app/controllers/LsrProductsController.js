@@ -2,7 +2,6 @@ const { ObjectId } = require('mongodb');
 const LsrProduct = require('../models/lsrProduct');
 const { LsrProductService } = require('../services/LsrProductService');
 
-// Helper functions
 const searchProducts = (data, searchTerm) => {
     if (!searchTerm || !data || !Array.isArray(data)) {
         return data || [];
@@ -14,13 +13,13 @@ const searchProducts = (data, searchTerm) => {
         const descriptionMatch = item.description
             ? item.description.toLowerCase().includes(lowerSearchTerm)
             : false;
-        
+
         const nameMatch = item.name
             ? item.name.toLowerCase().includes(lowerSearchTerm)
             : false;
 
         const keywordsMatch = item.keywords && Array.isArray(item.keywords)
-            ? item.keywords.some(keyword => 
+            ? item.keywords.some(keyword =>
                 keyword && keyword.toLowerCase().includes(lowerSearchTerm)
             )
             : false;
@@ -57,16 +56,35 @@ const getUniqueCategoriesAndSubcategories = (products) => {
 };
 
 module.exports = {
-    // Save product using service with req.identity
+    // Save product
     save: async (req, res) => {
         try {
-            // Pass req.identity as context
+            const User = require('../models/users');
+            const user = await User.findById(req.identity.id);
+
+            if (!user) {
+                return res.status(404).json({
+                    success: false,
+                    error: { code: 404, message: 'User not found' }
+                });
+            }
+
+            // if (!user.isSellerApproved) {
+            //     return res.status(403).json({
+            //         success: false,
+            //         error: {
+            //             code: 403,
+            //             message: 'Seller account is not approved yet. Please contact admin for approval.'
+            //         }
+            //     });
+            // }
+      
             const result = await LsrProductService.saveProduct(req.body, { identity: req.identity });
-            
+
             if (!result.success) {
                 return res.status(result.error.code || 400).json(result);
             }
-            
+
             res.status(201).json(result);
         } catch (error) {
             console.error('Save product error:', error);
@@ -77,17 +95,16 @@ module.exports = {
         }
     },
 
-    // Update product using service with req.identity
+
     update: async (req, res) => {
         try {
             const data = { ...req.body, id: req.params.id };
-            // Pass req.identity as context
-            const result = await LsrProductService.updateProduct(data, { identity: req.identity });
-            
+                        const result = await LsrProductService.updateProduct(data, { identity: req.identity });
+
             if (!result.success) {
                 return res.status(result.error.code || 400).json(result);
             }
-            
+
             res.json(result);
         } catch (error) {
             console.error('Update product error:', error);
@@ -98,17 +115,16 @@ module.exports = {
         }
     },
 
-    // Delete product using service with req.identity
+    // Delete product 
     delete: async (req, res) => {
         try {
             const data = { id: req.params.id };
-            // Pass req.identity as context
             const result = await LsrProductService.delete(data, { identity: req.identity });
-            
+
             if (!result.success) {
                 return res.status(result.error.code || 400).json(result);
             }
-            
+
             res.json(result);
         } catch (error) {
             console.error('Delete product error:', error);
@@ -123,11 +139,11 @@ module.exports = {
     getProduct: async (req, res) => {
         try {
             const result = await LsrProductService.getProductById(req.params.id);
-            
+
             if (!result.success) {
                 return res.status(result.error.code || 404).json(result);
             }
-            
+
             res.json(result);
         } catch (error) {
             console.error('Get product error:', error);
@@ -155,7 +171,7 @@ module.exports = {
             const status = req.query.status;
             const inStock = req.query.inStock;
             const isSellerApproved = req.query.isSellerApproved;
-            
+
             const query = {};
 
             if (sortBy) {
@@ -169,7 +185,7 @@ module.exports = {
             }
 
             query.isDeleted = false;
-    
+
             if (categoryId) {
                 query.category = categoryId;
             }
@@ -195,9 +211,9 @@ module.exports = {
                 if (status === "in-stock") { query.inStock = true; }
                 if (status === "out-of-stock") { query.inStock = false; }
             }
-    
+
             const total = await LsrProduct.countDocuments(query);
-            
+
             const products = await LsrProduct.find(query)
                 .populate("category")
                 .populate("subcategory")
@@ -210,7 +226,7 @@ module.exports = {
 
             let allProducts = "";
             let flag = false;
-            
+
             if (search) {
                 allProducts = searchProducts(products, search);
                 flag = true;
@@ -223,13 +239,13 @@ module.exports = {
             let allProductData = allProducts.map(product => {
                 return { ...product.toObject(), isFavourite: false };
             });
-            
+
             if (status === "low-stock") {
                 allProductData = allProductData.filter(
                     (product) => product.lowStock != null && product.stock != null && product.lowStock >= product.stock
                 );
             }
-            
+
             if (isSellerApproved === "true") {
                 allProductData = allProductData.filter(
                     (product) => product.addedBy?.isSellerApproved === true
@@ -239,10 +255,10 @@ module.exports = {
                     (product) => product.addedBy?.isSellerApproved === false
                 );
             }
-            
+
             const filteredTotal = allProductData.length;
             const paginatedProducts = allProductData.slice(skipNo, skipNo + count);
-            
+
             return res.json({
                 success: true,
                 message: "Products fetch successfully",
@@ -274,7 +290,7 @@ module.exports = {
             const city = req.query.city;
             const status = req.query.status;
             const isDeleted = req.query.isDeleted;
-            
+
             const query = {};
 
             if (categoryId) {
@@ -292,15 +308,15 @@ module.exports = {
             if (city) {
                 query.city = city;
             }
-            
+
             if (isDeleted) {
                 query.isDeleted = isDeleted === "true";
             } else {
                 query.isDeleted = false;
             }
-            
+
             const total = await LsrProduct.countDocuments(query);
-            
+
             const products = await LsrProduct.find(query)
                 .populate("category")
                 .populate("subcategory")
@@ -348,7 +364,7 @@ module.exports = {
             const userby = req.query.userby;
             const city = req.query.city;
             const status = req.query.status;
-            
+
             const query = { isDeleted: false };
 
             if (categoryId) {
@@ -366,9 +382,9 @@ module.exports = {
             if (city) {
                 query.city = city;
             }
-            
+
             const total = await LsrProduct.countDocuments(query);
-            
+
             const products = await LsrProduct.find(query)
                 .populate("category")
                 .populate("subcategory")

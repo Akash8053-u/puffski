@@ -3,7 +3,7 @@
  */
 
 const mongoose = require('mongoose');
-const db = require('../models/index'); // adjust path
+const db = require('../models/index'); 
 const ObjectId = mongoose.Types.ObjectId;
 
 module.exports = {
@@ -21,7 +21,7 @@ module.exports = {
         to: userId,
       };
 
-      /** AGGREGATION PIPELINE */
+      //AGGREGATION PIPELINE
       const pipeline = [
         { $match: matchStage },
 

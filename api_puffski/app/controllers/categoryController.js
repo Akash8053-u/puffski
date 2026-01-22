@@ -33,6 +33,7 @@ exports.delete = async (req, res, next) => {
   }
 };
 
+
 exports.list = async (req, res, next) => {
   try {
     const portal = req.query.portal;

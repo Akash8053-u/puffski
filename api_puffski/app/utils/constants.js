@@ -3,6 +3,9 @@ module.exports = {
     //"env": "prod"
     env: 'sandbox',
   },
+    ERROR_NOTIFICATION_CREATED: "Error notification added successfully",
+  VALIDATION_ERROR: "Validation failed",
+  INTERNAL_SERVER_ERROR: "Internal server error",
   key: {
     activekey:
       'ace9a61712b4c64a7ede39d532c1b24269865f02a67db4cf85358958fcdad38a974a2755',
@@ -303,6 +306,14 @@ module.exports = {
     ADMIN_CROP: '598c42bed820da2881c07329',
   },
 
+  LsrBrand: {
+    NAME_REQUIRED: 'Brand name required.',
+    BRANDS_ALREADY_EXIST: 'Brand already exists.',
+    BRANDS_SAVED: 'Brand saved successfully.',
+    UPDATED_BRANDS: 'Brand updated successfully.',
+    ISSUE_IN_UPDATE: 'There is some issue with updating brand.',
+    BRAND_NOT_FOUND: 'Brand not found.'
+  },
   lsrproduct: {
     NAME_REQUIRED: "Product name is required",
     CATEGORY_REQUIRED: "Category is required",

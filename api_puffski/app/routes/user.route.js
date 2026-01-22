@@ -10,6 +10,7 @@ const SubscribenameController = require("../controllers/SubscribenameController"
 const NotificationController = require("../controllers/NotificationController");
 const BlogsController = require("../controllers/BlogsController");
 const CategoryController = require("../controllers/categoryController");
+const { saveErrorNotifications } = require("../controllers/ErrorNotificationController");
 // const OAuthController = require("../controllers/OAuthController");
 // const CommonController = require("../controllers/commonController");
 
@@ -198,6 +199,24 @@ router.get(
   "/product/category/producer",
    CategoryController.getProducerCategoriesWithProduct
  );
+
+
+
+//error Notification routes
+// POST → Add error notification
+router.post("/add/errornotification", saveErrorNotifications);
+
+// // GET → List all error notifications
+// router.get("/errornotifications", getAllErrorNotifications);
+
+// // GET → Get single error notification (by id)
+// router.get("/errornotification/:id", getErrorNotificationDetail);
+
+
+
+
+
+
 // router.get(
 //   "/producer/products",
 //   categoryController.getProducerCategoryProducts

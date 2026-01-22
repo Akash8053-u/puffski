@@ -317,59 +317,210 @@ async function resetPasswordService(req, res) {
 
 async function registerUser(data) {
   try {
+    console.log('registerUser service called with data:', {
+      email: data.email,
+      username1: data.username1,
+      roles: data.roles
+    });
+
     if (!data) {
-      return { success: false, error: { code: 400, message: "Invalid data" } };
+      return { 
+        success: false, 
+        error: { code: 400, message: "Invalid data" } 
+      };
     }
 
+    // Validate required fields
+    if (!data.email) {
+      return { 
+        success: false, 
+        error: { code: 400, message: "Email is required" } 
+      };
+    }
+
+    if (!data.password) {
+      return { 
+        success: false, 
+        error: { code: 400, message: "Password is required" } 
+      };
+    }
+
+    // Normalize data
     data.email = data.email?.toLowerCase().trim();
     data.username1 = data.username1?.toLowerCase().trim() || data.email;
+    data.username = data.username?.toLowerCase().trim() || data.email;
+    data.roles = data.roles || 'U';
 
-    const existing = await db.User.findOne({
+    console.log('Normalized data:', {
+      email: data.email,
+      username1: data.username1,
+      roles: data.roles
+    });
+
+    // Check if user already exists by EMAIL
+    const existingByEmail = await db.User.findOne({
       email: data.email,
       isDeleted: false,
     });
 
-    if (existing) {
+    if (existingByEmail) {
+      console.log('User with this email already exists:', data.email);
       return {
         success: false,
-        error: { code: 409, message: "Email already exists" },
+        error: { 
+          code: 409, 
+          message: "Email already exists",
+          key: "EMAIL_EXIST"
+        },
       };
     }
 
-    const code = commonService.getUniqueCode();
-    data.code = code;
-    data.date_registered = new Date();
-    data.status = "inactive"; // activate after verification
-
-    // hash password
-    data.password = await bcrypt.hash(data.password, 10);
-
-    const newUser = await db.User.create(data);
-
-    const email2 = "akash@yopmail.com";
-    const verifyURL = `${
-      process.env.Puffski_BACK_WEB_URL
-    }/verify/${encodeURIComponent(email2)}?code=${code}`;
-    const emailHTML = onboardingVerificationEmail({
+    // Check if user already exists by USERNAME1
+    const existingByUsername = await db.User.findOne({
       username1: data.username1,
-      email: email2,
-      verifyURL,
+      isDeleted: false,
     });
 
-    const email = "akash@yopmail.com";
-    await sendEmail(email2, "Verify your Puffski account", emailHTML);
+    if (existingByUsername) {
+      console.log('Username already taken:', data.username1);
+      return {
+        success: false,
+        error: { 
+          code: 409, 
+          message: "Username already taken. Please choose a different username.",
+          key: "USERNAME_EXIST"
+        },
+      };
+    }
+
+    // Generate unique code
+    const code = commonService?.getUniqueCode ? commonService.getUniqueCode() : Math.floor(100000 + Math.random() * 900000);
+    data.code = code;
+    data.date_registered = new Date();
+    data.status = "inactive";
+    data.isVerified = "N";
+    data.userType = data.userType || "puffski";
+
+    // Hash password
+    try {
+      const salt = await bcrypt.genSalt(10);
+      data.password = await bcrypt.hash(data.password, salt);
+      console.log('Password hashed successfully');
+    } catch (hashError) {
+      console.error('Password hashing error:', hashError);
+      return {
+        success: false,
+        error: { code: 500, message: "Error processing password" }
+      };
+    }
+
+    // Create user
+    console.log('Creating user with data:', {
+      email: data.email,
+      username1: data.username1,
+      roles: data.roles,
+      status: data.status
+    });
+
+    let newUser;
+    try {
+      newUser = await db.User.create(data);
+      console.log('User created successfully:', newUser._id);
+    } catch (createError) {
+      console.error('Error creating user in database:', createError);
+      
+      // Handle duplicate key errors
+      if (createError.code === 11000) {
+        // Parse which field caused the duplicate
+        const keyValue = createError.keyValue || {};
+        
+        if (keyValue.username1) {
+          return {
+            success: false,
+            error: { 
+              code: 409, 
+              message: `Username '${keyValue.username1}' is already taken. Please choose a different username.`,
+              key: "USERNAME_EXIST"
+            }
+          };
+        } else if (keyValue.email) {
+          return {
+            success: false,
+            error: { 
+              code: 409, 
+              message: "Email already exists",
+              key: "EMAIL_EXIST"
+            }
+          };
+        } else {
+          return {
+            success: false,
+            error: { 
+              code: 409, 
+              message: "User already exists with these details"
+            }
+          };
+        }
+      }
+      
+      // Handle validation errors
+      if (createError.name === 'ValidationError') {
+        const errors = Object.values(createError.errors).map(err => err.message);
+        return {
+          success: false,
+          error: { 
+            code: 400, 
+            message: `Validation error: ${errors.join(', ')}` 
+          }
+        };
+      }
+      
+      // Generic error
+      return {
+        success: false,
+        error: { 
+          code: 500, 
+          message: "Failed to create user. Please try again.",
+          details: process.env.NODE_ENV === 'development' ? createError.message : undefined
+        }
+      };
+    }
+
+    // Send verification email
+    try {
+      const verifyURL = `${process.env.Puffski_BACK_WEB_URL || 'http://localhost:3000'}/verify/${encodeURIComponent(data.email)}?code=${code}`;
+      const emailHTML = onboardingVerificationEmail({
+        username1: data.username1,
+        email: data.email,
+        verifyURL,
+      });
+
+      await sendEmail(data.email, "Verify your Puffski account", emailHTML);
+      console.log('Verification email sent to:', data.email);
+    } catch (emailError) {
+      console.warn('Failed to send verification email:', emailError.message);
+      // Continue - email failure shouldn't fail registration
+    }
 
     return {
       success: true,
-      message: "User registered. Verification email sent.",
-      user: newUser,
-      verifyURL,
+      message: "User registered successfully. Please check your email for verification.",
+      data: {
+        userId: newUser._id,
+        email: newUser.email,
+        username: newUser.username1,
+        roles: newUser.roles
+      },
     };
   } catch (err) {
-    console.error("Register user error:", err);
+    console.error('Register user error:', err);
     return {
       success: false,
-      error: { code: 500, message: "Internal Server Error" },
+      error: { 
+        code: 500, 
+        message: "Internal Server Error",
+        details: process.env.NODE_ENV === 'development' ? err.message : undefined
+      }
     };
   }
 }
