@@ -16,12 +16,12 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     roles: {
       type: String,
-      enum: ['SA', 'A', 'U', 'D', 'B', 'DR', 'DRIVER', 'STOREADMIN', 'P','EXPRESS'],
+      enum: ['SA', 'A', 'U', 'D', 'B', 'DR', 'DRIVER', 'STOREADMIN', 'P', 'EXPRESS'],
       default: 'U',
     },
     roleId: { type: mongoose.Schema.Types.ObjectId, ref: 'Role' },
-    userType: { type: String, enum: ['LSR', 'PUFFSKI'], default: 'PUFFSKI' },
-    Type: { type: String, required: true },
+    //userType: { type: String, enum: ['LSR', 'PUFFSKI'], default: 'PUFFSKI' },
+    //Type: { type: String, required: true },
     store_slug: { type: String },
     date_verified: { type: Date },
     isVerified: { type: String, enum: ['Y', 'N'], default: 'N' },
@@ -75,6 +75,23 @@ const userSchema = new mongoose.Schema(
     start_date: { type: Date },
     exp_date: { type: Date },
     signupLocation: { type: String },
+    // In User.js model, add these fields:
+    moneris_storeId: {
+      type: String,
+      default: '',
+      description: 'Moneris Store ID for LSR payments'
+    },
+    moneris_token: {
+      type: String,
+      default: '',
+      description: 'Moneris API token for LSR payments'
+    },
+    isLSRStore: {
+      type: Boolean,
+      default: false,
+      description: 'Flag to identify LSR stores'
+    },
+    //
     os: { type: String, enum: ['ANDROID', 'IOS'] },
     domain: { type: String, enum: ['web', 'ios', 'android'] },
     addedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

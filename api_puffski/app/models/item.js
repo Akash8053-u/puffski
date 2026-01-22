@@ -67,9 +67,23 @@ const itemSchema = new mongoose.Schema({
   isDelivery: { type: Boolean, default: false },
   isFeatureDelivery: { type: Boolean, default: false },
   isPinImage: { type: Boolean, default: false },
-  client_id: { type: String, default: '' },
-  client_secret: { type: String, default: '' },
-  sevenPercentUpPrice: { type: Boolean, default: false },
+    moneris_storeId: {
+    type: String,
+    default: '',
+    set: function (val) {
+      this.client_id = val;
+      return val;
+    }
+  },
+  moneris_token: {
+    type: String,
+    default: '',
+    set: function (val) {
+      this.client_secret = val;
+      return val;
+    }
+  },
+    sevenPercentUpPrice: { type: Boolean, default: false },
   isOrderLimit: { type: Boolean, default: false },
   isOnSaleHide: { type: Boolean, default: false },
   orderLimit: { type: String, default: '' },

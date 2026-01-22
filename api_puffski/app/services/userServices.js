@@ -28,15 +28,12 @@ const {
 } = require("../Emails/emailVerifyLinks");
 // ----------------------- SIGNUP SERVICE -----------------------
 
-
-
-
 const socialUserAccess = async (client_id, user) => {
   if (!client_id) {
     return {
       success: false,
       code: 401,
-      message: 'Client Id is missing',
+      message: "Client Id is missing",
     };
   }
 
@@ -49,22 +46,20 @@ const socialUserAccess = async (client_id, user) => {
     success: true,
     code: 200,
     message: constants.messages.SOCIAL_USER_LOGGED_IN,
-    key: 'SOCIAL_USER_LOGGED_IN',
+    key: "SOCIAL_USER_LOGGED_IN",
     data: {
-      ...user.toObject(),        // prevents DB mutation
+      ...user.toObject(), // prevents DB mutation
       access_token: token.access_token,
       refresh_token: token.refresh_token,
     },
   };
 };
 
-
-
 async function SignupUserService(req, res) {
   try {
     const user = req.body;
-       console.log(user);
-       
+    console.log(user);
+
     const existing = await db.User.findOne({
       email: user.email,
       isDeleted: false,
@@ -85,12 +80,10 @@ async function SignupUserService(req, res) {
       .status(500)
       .json({ success: false, message: "Internal Server Error" });
   }
-
-
-
 }
 async function signinUserService(data) {
   try {
+
     if (!data.username1) {
       return {
         success: false,
@@ -131,7 +124,7 @@ async function signinUserService(data) {
         },
       };
     }
-
+console.log(user,"userdadgghr")
     // Verification checks
     if (user.roles === "U" && user.isVerified !== "Y") {
       return {
@@ -161,20 +154,21 @@ async function signinUserService(data) {
     }
 
     // Password check
-    const validPassword =
-      bcrypt.compareSync(data.password, user.password) ||
-      bcrypt.compareSync(data.password.toLowerCase(), user.password);
+  const isPasswordValid = await bcrypt.compare(
+  data.password.trim(),
+  user.password
+);
 
-    if (!validPassword) {
-      return {
-        success: false,
-        error: {
-          code: 404,
-          message: constants.messages.WRONG_PASSWORD,
-          key: "WRONG_PASSWORD",
-        },
-      };
-    }
+if (!isPasswordValid) {
+  return {
+    success: false,
+    error: {
+      code: 401,
+      message: constants.messages.WRONG_PASSWORD,
+      key: "WRONG_PASSWORD",
+    },
+  };
+}
 
     // Prepare login data
     const loginData = {
@@ -220,7 +214,7 @@ async function signinUserService(data) {
     lastLoginUpdate.usersloginCount = (user.usersloginCount || 0) + 1;
 
     await db.User.updateOne({ id: user.id }, lastLoginUpdate);
-
+    console.log("token:", token);
     return {
       success: true,
       code: 200,
@@ -255,7 +249,7 @@ async function loginUserService(req, res) {
     const token = jwt.sign(
       { _id: user._id, Email: user.Email },
       process.env.JWT_SECRET,
-      { expiresIn: "2h" }
+      { expiresIn: "2h" },
     );
 
     return res.status(200).json({ success: true, token });
@@ -314,34 +308,33 @@ async function resetPasswordService(req, res) {
   }
 }
 
-
 async function registerUser(data) {
   try {
-    console.log('registerUser service called with data:', {
+    console.log("registerUser service called with data:", {
       email: data.email,
       username1: data.username1,
-      roles: data.roles
+      roles: data.roles,
     });
 
     if (!data) {
-      return { 
-        success: false, 
-        error: { code: 400, message: "Invalid data" } 
+      return {
+        success: false,
+        error: { code: 400, message: "Invalid data" },
       };
     }
 
     // Validate required fields
     if (!data.email) {
-      return { 
-        success: false, 
-        error: { code: 400, message: "Email is required" } 
+      return {
+        success: false,
+        error: { code: 400, message: "Email is required" },
       };
     }
 
     if (!data.password) {
-      return { 
-        success: false, 
-        error: { code: 400, message: "Password is required" } 
+      return {
+        success: false,
+        error: { code: 400, message: "Password is required" },
       };
     }
 
@@ -349,12 +342,12 @@ async function registerUser(data) {
     data.email = data.email?.toLowerCase().trim();
     data.username1 = data.username1?.toLowerCase().trim() || data.email;
     data.username = data.username?.toLowerCase().trim() || data.email;
-    data.roles = data.roles || 'U';
+    data.roles = data.roles || "U";
 
-    console.log('Normalized data:', {
+    console.log("Normalized data:", {
       email: data.email,
       username1: data.username1,
-      roles: data.roles
+      roles: data.roles,
     });
 
     // Check if user already exists by EMAIL
@@ -364,13 +357,13 @@ async function registerUser(data) {
     });
 
     if (existingByEmail) {
-      console.log('User with this email already exists:', data.email);
+      console.log("User with this email already exists:", data.email);
       return {
         success: false,
-        error: { 
-          code: 409, 
+        error: {
+          code: 409,
           message: "Email already exists",
-          key: "EMAIL_EXIST"
+          key: "EMAIL_EXIST",
         },
       };
     }
@@ -382,19 +375,22 @@ async function registerUser(data) {
     });
 
     if (existingByUsername) {
-      console.log('Username already taken:', data.username1);
+      console.log("Username already taken:", data.username1);
       return {
         success: false,
-        error: { 
-          code: 409, 
-          message: "Username already taken. Please choose a different username.",
-          key: "USERNAME_EXIST"
+        error: {
+          code: 409,
+          message:
+            "Username already taken. Please choose a different username.",
+          key: "USERNAME_EXIST",
         },
       };
     }
 
     // Generate unique code
-    const code = commonService?.getUniqueCode ? commonService.getUniqueCode() : Math.floor(100000 + Math.random() * 900000);
+    const code = commonService?.getUniqueCode
+      ? commonService.getUniqueCode()
+      : Math.floor(100000 + Math.random() * 900000);
     data.code = code;
     data.date_registered = new Date();
     data.status = "inactive";
@@ -405,90 +401,95 @@ async function registerUser(data) {
     try {
       const salt = await bcrypt.genSalt(10);
       data.password = await bcrypt.hash(data.password, salt);
-      console.log('Password hashed successfully');
+      console.log("Password hashed successfully");
     } catch (hashError) {
-      console.error('Password hashing error:', hashError);
+      console.error("Password hashing error:", hashError);
       return {
         success: false,
-        error: { code: 500, message: "Error processing password" }
+        error: { code: 500, message: "Error processing password" },
       };
     }
 
     // Create user
-    console.log('Creating user with data:', {
+    console.log("Creating user with data:", {
       email: data.email,
       username1: data.username1,
       roles: data.roles,
-      status: data.status
+      status: data.status,
     });
 
     let newUser;
     try {
       newUser = await db.User.create(data);
-      console.log('User created successfully:', newUser._id);
+      console.log("User created successfully:", newUser._id);
     } catch (createError) {
-      console.error('Error creating user in database:', createError);
-      
+      console.error("Error creating user in database:", createError);
+
       // Handle duplicate key errors
       if (createError.code === 11000) {
         // Parse which field caused the duplicate
         const keyValue = createError.keyValue || {};
-        
+
         if (keyValue.username1) {
           return {
             success: false,
-            error: { 
-              code: 409, 
+            error: {
+              code: 409,
               message: `Username '${keyValue.username1}' is already taken. Please choose a different username.`,
-              key: "USERNAME_EXIST"
-            }
+              key: "USERNAME_EXIST",
+            },
           };
         } else if (keyValue.email) {
           return {
             success: false,
-            error: { 
-              code: 409, 
+            error: {
+              code: 409,
               message: "Email already exists",
-              key: "EMAIL_EXIST"
-            }
+              key: "EMAIL_EXIST",
+            },
           };
         } else {
           return {
             success: false,
-            error: { 
-              code: 409, 
-              message: "User already exists with these details"
-            }
+            error: {
+              code: 409,
+              message: "User already exists with these details",
+            },
           };
         }
       }
-      
+
       // Handle validation errors
-      if (createError.name === 'ValidationError') {
-        const errors = Object.values(createError.errors).map(err => err.message);
+      if (createError.name === "ValidationError") {
+        const errors = Object.values(createError.errors).map(
+          (err) => err.message,
+        );
         return {
           success: false,
-          error: { 
-            code: 400, 
-            message: `Validation error: ${errors.join(', ')}` 
-          }
+          error: {
+            code: 400,
+            message: `Validation error: ${errors.join(", ")}`,
+          },
         };
       }
-      
+
       // Generic error
       return {
         success: false,
-        error: { 
-          code: 500, 
+        error: {
+          code: 500,
           message: "Failed to create user. Please try again.",
-          details: process.env.NODE_ENV === 'development' ? createError.message : undefined
-        }
+          details:
+            process.env.NODE_ENV === "development"
+              ? createError.message
+              : undefined,
+        },
       };
     }
 
     // Send verification email
     try {
-      const verifyURL = `${process.env.Puffski_BACK_WEB_URL || 'http://localhost:3000'}/verify/${encodeURIComponent(data.email)}?code=${code}`;
+      const verifyURL = `${process.env.Puffski_BACK_WEB_URL || "http://localhost:3000"}/verify/${encodeURIComponent(data.email)}?code=${code}`;
       const emailHTML = onboardingVerificationEmail({
         username1: data.username1,
         email: data.email,
@@ -496,31 +497,33 @@ async function registerUser(data) {
       });
 
       await sendEmail(data.email, "Verify your Puffski account", emailHTML);
-      console.log('Verification email sent to:', data.email);
+      console.log("Verification email sent to:", data.email);
     } catch (emailError) {
-      console.warn('Failed to send verification email:', emailError.message);
+      console.warn("Failed to send verification email:", emailError.message);
       // Continue - email failure shouldn't fail registration
     }
 
     return {
       success: true,
-      message: "User registered successfully. Please check your email for verification.",
+      message:
+        "User registered successfully. Please check your email for verification.",
       data: {
         userId: newUser._id,
         email: newUser.email,
         username: newUser.username1,
-        roles: newUser.roles
+        roles: newUser.roles,
       },
     };
   } catch (err) {
-    console.error('Register user error:', err);
+    console.error("Register user error:", err);
     return {
       success: false,
-      error: { 
-        code: 500, 
+      error: {
+        code: 500,
         message: "Internal Server Error",
-        details: process.env.NODE_ENV === 'development' ? err.message : undefined
-      }
+        details:
+          process.env.NODE_ENV === "development" ? err.message : undefined,
+      },
     };
   }
 }
@@ -535,7 +538,7 @@ const updateUserService = async (req, res) => {
       {
         new: true, // return updated user
         runValidators: true,
-      }
+      },
     );
 
     if (!updatedUser) {
@@ -575,7 +578,7 @@ async function getUserProfileService(id) {
   // Attach default shipping address info
   if (user.shippingDetail && user.shippingDetail.length > 0) {
     const defaultAddress = user.shippingDetail.find(
-      (a) => a.isDefault === true
+      (a) => a.isDefault === true,
     );
 
     if (defaultAddress) {
@@ -623,7 +626,7 @@ async function changePasswordService(
   userId,
   currentPassword,
   newPassword,
-  confirmPassword
+  confirmPassword,
 ) {
   if (!newPassword || newPassword.trim() === "") {
     throw {
@@ -666,7 +669,7 @@ async function changePasswordService(
   // Hash the new password
   const encryptedPassword = bcrypt.hashSync(
     newPassword,
-    bcrypt.genSaltSync(10)
+    bcrypt.genSaltSync(10),
   );
   const updatedDate = new Date();
 
@@ -739,7 +742,7 @@ async function resetPasswordService(
   userId,
   newPassword,
   confirmPassword,
-  type
+  type,
 ) {
   if (newPassword !== confirmPassword) {
     throw {
@@ -760,7 +763,7 @@ async function resetPasswordService(
   // Hash the new password
   const encryptedPassword = bcrypt.hashSync(
     newPassword,
-    bcrypt.genSaltSync(10)
+    bcrypt.genSaltSync(10),
   );
   const updatedDate = new Date();
 
@@ -776,7 +779,7 @@ async function resetPasswordService(
   const updatedUser = await db.User.findByIdAndUpdate(
     userId,
     { encryptedPassword, lastPasswordUpdated: updatedDate },
-    { new: true }
+    { new: true },
   );
 
   // Optional: send email if user is a dispensary
@@ -822,7 +825,7 @@ async function setPassword(data) {
   // Encrypt password
   const encryptedPassword = bcrypt.hashSync(
     newPassword,
-    bcrypt.genSaltSync(10)
+    bcrypt.genSaltSync(10),
   );
 
   // Save updated password record
@@ -839,7 +842,7 @@ async function setPassword(data) {
   const updatedDate = new Date();
   await db.User.update(
     { id },
-    { encryptedPassword, lastPasswordUpdated: updatedDate }
+    { encryptedPassword, lastPasswordUpdated: updatedDate },
   );
 
   // Send email if dispensary
@@ -887,7 +890,7 @@ async function setPassword(data) {
   // Encrypt password
   const encryptedPassword = bcrypt.hashSync(
     newPassword,
-    bcrypt.genSaltSync(10)
+    bcrypt.genSaltSync(10),
   );
 
   // Save updated password record
@@ -904,7 +907,7 @@ async function setPassword(data) {
   const updatedDate = new Date();
   await db.User.update(
     { id },
-    { encryptedPassword, lastPasswordUpdated: updatedDate }
+    { encryptedPassword, lastPasswordUpdated: updatedDate },
   );
 
   // Send email if dispensary
@@ -926,7 +929,7 @@ async function deleteUserAccount(id) {
   const user = await db.User.findByIdAndUpdate(
     { _id: id, isDeleted: false },
     { isDeleted: true },
-    { new: true }
+    { new: true },
   );
   if (!user) {
     throw new Error("User not found or already deleted.");
@@ -1065,7 +1068,7 @@ async function updateFCMData(req, res) {
 
     // Remove duplicate token if exists
     user.push_token_array = user.push_token_array.filter(
-      (token) => token !== push_token
+      (token) => token !== push_token,
     );
 
     // Add new token to the array
@@ -1215,7 +1218,7 @@ async function setPasswordForStores(data) {
 
   const encryptedPassword = await bcrypt.hashSync(
     newPassword,
-    bcrypt.genSaltSync(10)
+    bcrypt.genSaltSync(10),
   );
 
   const passwordLog = {
@@ -1238,7 +1241,7 @@ async function setPasswordForStores(data) {
     {
       password: encryptedPassword,
       lastPasswordUpdated: updatedDate,
-    }
+    },
   );
 
   await emailChangePassword(newPassword, user, function () {});
@@ -1250,7 +1253,6 @@ async function setPasswordForStores(data) {
     key: "PASSWORD_CHANGED",
   };
 }
-
 
 const isValidEmail = (email) => {
   const re = /\S+@\S+\.\S+/;
@@ -1884,7 +1886,7 @@ async function getAllUsersUpdate(params) {
     // Update user document
     await db.User.updateOne(
       { _id: user.id },
-      { totalOrder, totalSpend, avgspend }
+      { totalOrder, totalSpend, avgspend },
     );
   }
 
@@ -1984,7 +1986,7 @@ async function otpSendService(email) {
   const response = await sendEmail(
     process.env.ADMIN_EMAIL,
     "Password Reset OTP",
-    emailHtml
+    emailHtml,
   );
 
   if (!response.success) {
@@ -2044,7 +2046,7 @@ const ageVerificationService = async (id, data, verifierId) => {
   const updatedUser = await db.User.findByIdAndUpdate(
     { _id: String(id) },
     dataToUpdate,
-    { new: true }
+    { new: true },
   );
 
   return updatedUser;
@@ -2085,7 +2087,7 @@ async function lsrCommonOTPSend(email) {
     const emailResponse = await sendEmail(
       email,
       "Local Showroom Password Reset",
-      html
+      html,
     );
 
     if (!emailResponse.success) {
@@ -2199,7 +2201,7 @@ async function autoLoginService(data) {
       device_type,
       deviceToken: data.device_token || null,
       domain: data.domain || null,
-    }
+    },
   );
 
   // Attach tokens to user object
@@ -2238,15 +2240,15 @@ async function commonsendOTPService(email) {
     const firstName = user.firstName
       ? `${user.firstName} ${user.lastName}`
       : user.fullName
-      ? user.fullName
-      : user.username1;
+        ? user.fullName
+        : user.username1;
     const emailHtml = `<p>Hello ${firstName},</p><p>Your OTP is: <b>${otp}</b></p>`;
 
     // Send email
     const emailResult = await sendEmail(
       email,
       "Your OTP Verification",
-      emailHtml
+      emailHtml,
     );
     if (!emailResult.success) console.error("Email failed:", emailResult.error);
 
@@ -2294,8 +2296,6 @@ async function commonsendOTPService(email) {
 }
 
 const signinService = async (data) => {
-
- 
   let query = {
     isDeleted: false,
     $or: [{ username1: data.username }, { username: data.username }],
@@ -2306,12 +2306,23 @@ const signinService = async (data) => {
   }
 
   const user = await db.User.findOne(query);
-   console.log(user);
+  console.log(user,"gjjjkxyjjxjuyujuruurtttytyytyt");
   if (!user) {
-    return { success: false, error: { code: 404, message: constants.messages.WRONG_USERNAME, key: 'WRONG_USERNAME' } };
+    return {
+      success: false,
+      error: {
+        code: 404,
+        message: constants.messages.WRONG_USERNAME,
+        key: "WRONG_USERNAME",
+      },
+    };
   }
 
-  if (user.roles === 'U' && user.isVerified !== 'Y' && user.status === 'deactive') {
+  if (
+    user.roles === "U" &&
+    user.isVerified !== "Y" &&
+    user.status === "deactive"
+  ) {
     return {
       success: false,
       error: {
@@ -2319,21 +2330,35 @@ const signinService = async (data) => {
         isVerified: false,
         email: user.email,
         message: constants.messages.USERNAME_NOT_VERIFIED,
-        key: 'USERNAME_NOT_VERIFIED',
+        key: "USERNAME_NOT_VERIFIED",
       },
     };
   }
 
-  if (user.status === 'deactive') {
-    return { success: false, error: { code: 404, message: constants.messages.USERNAME_INACTIVE, key: 'USERNAME_INACTIVE' } };
+  if (user.status === "deactive") {
+    return {
+      success: false,
+      error: {
+        code: 404,
+        message: constants.messages.USERNAME_INACTIVE,
+        key: "USERNAME_INACTIVE",
+      },
+    };
   }
 
-  if (!bcrypt.compareSync(data.password, user.password)) {
-    return { success: false, error: { code: 404, message: constants.messages.WRONG_PASSWORD, key: 'WRONG_PASSWORD' } };
+  if (!bcrypt.compare(data.password, user.password)) {
+    return {
+      success: false,
+      error: {
+        code: 404,
+        message: constants.messages.WRONG_PASSWORD,
+        key: "WRONG_PASSWORD",
+      },
+    };
   }
 
   // Prepare login data
-  const device_type = data.device_type || 'Web';
+  const device_type = data.device_type || "Web";
   const inputData = {
     user: user.id,
     device_type,
@@ -2342,7 +2367,10 @@ const signinService = async (data) => {
   };
 
   // Generate tokens
-  const token = await TokenService.generateToken({ client_id: user.id, user_id: user.id });
+  const token = await TokenService.generateToken({
+    client_id: user.id,
+    user_id: user.id,
+  });
   user.access_token = token.access_token;
   user.refresh_token = token.refresh_token;
   inputData.access_token = token.access_token;
@@ -2353,18 +2381,20 @@ const signinService = async (data) => {
   // Update user's last login info
   const lastLoginUpdate = {
     lastLogin: new Date(),
-    status: 'active',
+    status: "active",
     usersloginCount: (user.usersloginCount || 0) + 1,
   };
 
-  if (data.domain === 'mobile') {
+  if (data.domain === "mobile") {
     lastLoginUpdate.deviceToken = data.device_token || null;
     lastLoginUpdate.domain = data.domain;
     lastLoginUpdate.device_type = device_type;
   }
 
-  await db.User.findByIdAndUpdate({ _id: user._id }, lastLoginUpdate,{new:true});
-
+  await db.User.findByIdAndUpdate({ _id: user._id }, lastLoginUpdate, {
+    new: true,
+  });
+console.log(token,"kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk");
   return {
     success: true,
     code: 200,
@@ -2373,19 +2403,18 @@ const signinService = async (data) => {
   };
 };
 
+const DEFAULT_PASSWORD = "1234567890";
 
-const DEFAULT_PASSWORD = '1234567890';
-
-async function signupSocialMedia (data) {
+async function signupSocialMedia(data) {
   const date = new Date();
 
   Object.assign(data, {
-    roles: 'U',
-    Type: 'U',
+    roles: "U",
+    Type: "U",
     date_registered: date,
     date_verified: date,
-    mobile: '1234567890',
-    domain: 'android',
+    mobile: "1234567890",
+    domain: "android",
   });
 
   const clientId = data.client_id;
@@ -2395,14 +2424,14 @@ async function signupSocialMedia (data) {
     return {
       success: false,
       code: 400,
-      message: 'Provider is required',
+      message: "Provider is required",
     };
   }
 
   const providerConfig = {
-    facebook: { key: 'fbId', suffix: '_facebook' },
-    google: { key: 'gId', suffix: '_google' },
-    apple: { key: 'gId', suffix: '_apple' },
+    facebook: { key: "fbId", suffix: "_facebook" },
+    google: { key: "gId", suffix: "_google" },
+    apple: { key: "gId", suffix: "_apple" },
   };
 
   const config = providerConfig[provider];
@@ -2410,7 +2439,7 @@ async function signupSocialMedia (data) {
     return {
       success: false,
       code: 400,
-      message: 'Invalid social login data',
+      message: "Invalid social login data",
     };
   }
 
@@ -2431,12 +2460,12 @@ async function signupSocialMedia (data) {
   const existingUser = await db.User.findOne({ username1 });
 
   if (existingUser) {
-    return {          
+    return {
       success: false,
       error: {
         code: 301,
         message: constants.messages.USER_EXIST,
-        key: 'USER_EXIST',
+        key: "USER_EXIST",
       },
     };
   }
@@ -2446,9 +2475,7 @@ async function signupSocialMedia (data) {
 
   const newUser = await db.User.create(data);
   return socialUserAccess(clientId, newUser);
-};
-
-
+}
 
 module.exports = {
   signinService,
@@ -2485,5 +2512,5 @@ module.exports = {
   verifyUserAccount,
   autoLoginService,
   ageVerificationService,
-  signupSocialMedia
+  signupSocialMedia,
 };

@@ -8,7 +8,8 @@ const redis = require('redis');
 const nodemailer = require('nodemailer');
 const constants = require('../utils/constants');
 const local = require('../config/local');
-
+const axios = require('axios');
+const { parseString } = require('xml2js');
 // Initialize services
 // const slackWebClient = new WebClient(process.env.SLACK_TOKEN || local.SLACK_TOKEN);
 // const slackChannelId = process.env.SLACK_CHANNEL || local.SLACK_CHANNEL;
@@ -48,202 +49,368 @@ const LsrProduct = require('../models/lsrProduct');
 const BuyProductAnalytic = require('../models/buyProductAnalytics');
 const Notification = require('../models/Notifications');
 const Cart = require('../models/lsrCarts');
-
+const Item = require('../models/item');
 class MonerisService {
 
-  async addCard(data) {
-    try {
-      const { card_expiry_month, card_expiry_year, cvv2, card_number, dispensary_id, userId } = data;
+async addCard(data) {
+  try {
+    const {
+      card_expiry_month,
+      card_expiry_year,
+      cvv2,
+      card_number,
+      dispensary_id,
+      userId,
+      ownerName,
+      address,
+      city,
+      province,
+      country,
+      postal_code,
+      apartment
+    } = data;
 
-      const cardNumber = String(card_number);
-      const last4 = cardNumber.slice(cardNumber.length - 4);
+    console.log('🔧 Starting addCard process...');
+    console.log('User ID:', userId);
+    console.log('Dispensary ID:', dispensary_id);
 
-     
-      let cardBrand = "";
-      let cardFunding = "";
-      let cardType = "";
+    // 1. Get user (customer)
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
 
+    // 2. Get dispensary - FROM ITEM MODEL
+    const dispensary = await Item.findById(dispensary_id);
+    console.log('Dispensary found:', dispensary ? 'Yes' : 'No');
+
+    if (!dispensary) {
+      throw new Error('Dispensary not found');
+    }
+
+    // 3. Check if dispensary has Moneris credentials
+    console.log('Checking Moneris credentials...');
+    console.log('Moneris Store ID:', dispensary.moneris_storeId);
+    console.log('Moneris Token present:', dispensary.moneris_token ? 'Yes' : 'No');
+
+    // Use the field names from your Item model
+    const storeId = dispensary.moneris_storeId;
+    const apiToken = dispensary.moneris_token;
+
+    if (!storeId || !apiToken) {
+      await FailedCards.create({
+        userId: userId,
+        error: 'Moneris credentials not configured for this store',
+        store_id: dispensary_id,
+        platform: "lsrshowroom"
+      });
+      throw new Error('This store has not configured payment processing');
+    }
+
+    // 4. Validate card number format
+    const cardNumber = String(card_number).replace(/\s/g, '');
+    const last4 = cardNumber.slice(-4);
+
+    if (cardNumber.length < 13 || cardNumber.length > 19) {
+      throw new Error('Invalid card number length');
+    }
+
+    // 5. Skip Stripe validation for now (optional)
+    let cardBrand = "";
+    let cardFunding = "";
+    let cardType = "";
+
+    // 6. Check if card already exists
+    const existedCard = await LsrMerrcoCards.findOne({
+      last4: last4,
+      userId: userId,
+      dispensary_id: dispensary_id,
+      payment_gateway: 'Moneris'
+    });
+
+    if (existedCard) {
+      throw new Error('This card is already saved for this store');
+    }
+
+    // 7. Prepare expiry date for Moneris (YYMM format)
+    const last2Year = card_expiry_year.slice(-2);
+    const expdate = last2Year + card_expiry_month.padStart(2, '0');
+
+    console.log('Calling Moneris API...');
+    console.log('Card expiry (YYMM):', expdate);
+
+    // 8. Tokenize card with Moneris - TEST MODE ENABLED
+    let monerisResponse;
+    const TEST_MODE = true; // Set to false for production
+    
+    if (TEST_MODE) {
+      // TEST MODE: Simulate successful response
+      console.log('⚠️ TEST MODE ENABLED - Simulating Moneris response');
+      monerisResponse = {
+        response_code: '001',
+        data_key: 'test_token_' + Date.now() + '_' + last4,
+        message: 'Success (TEST MODE)',
+        receipt_id: 'TEST' + Date.now()
+      };
+      console.log('Simulated response:', JSON.stringify(monerisResponse, null, 2));
+    } else {
+      // PRODUCTION MODE: Actual Moneris API call
       try {
-        const token = await stripe.tokens.create({
-          card: {
-            number: card_number,
-            exp_month: card_expiry_month,
-            exp_year: card_expiry_year,
-            cvc: cvv2,
-            name: data.ownerName || ""
-          }
+        const axios = require('axios');
+        
+        // Determine API endpoint based on environment
+        const apiUrl = 'qa' === 'qa' 
+          ? 'https://gatewayt.moneris.com/chkt/request/request.php'
+          : 'https://gateway.moneris.com/chkt/request/request.php';
+        
+        // Build request data - Try different parameter combinations
+        const requestData = new URLSearchParams();
+        
+        // Try with standard Moneris parameters
+        requestData.append('ps_store_id', storeId);
+        requestData.append('hpp_key', apiToken);
+        requestData.append('txn_number', Date.now().toString().slice(-6));
+        requestData.append('pan', card_number);
+        requestData.append('expdate', expdate);
+        requestData.append('crypt_type', '7');
+        
+        // Add optional fields
+        requestData.append('order_no', 'LSR_' + Date.now());
+        requestData.append('cust_id', userId);
+        requestData.append('dynamic_descriptor', 'Card Registration');
+        
+        console.log('Making direct Moneris API call to:', apiUrl);
+        console.log('Request params (excluding sensitive data):', {
+          ps_store_id: storeId,
+          txn_number: Date.now().toString().slice(-6),
+          pan: '***' + card_number.slice(-4),
+          expdate: expdate,
+          order_no: 'LSR_' + Date.now()
         });
-
-        if (token && token.card) {
-          cardBrand = token.card.brand;
-          cardFunding = token.card.funding;
-          cardType = token.type;
+        
+        const response = await axios.post(apiUrl, requestData.toString(), {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': 'Mozilla/5.0',
+            'Accept': 'application/json, text/xml'
+          },
+          timeout: 30000
+        });
+        
+        // Parse response
+        monerisResponse = response.data;
+        console.log('✅ Direct API call successful');
+        console.log('Response type:', typeof monerisResponse);
+        console.log('Response:', JSON.stringify(monerisResponse, null, 2));
+        
+        // Handle XML response
+        if (typeof monerisResponse === 'string' && monerisResponse.includes('<?xml')) {
+          console.log('Parsing XML response...');
+          const { parseString } = require('xml2js');
+          
+          const parsed = await new Promise((resolve, reject) => {
+            parseString(monerisResponse, (err, result) => {
+              if (err) reject(err);
+              else resolve(result);
+            });
+          });
+          
+          // Convert XML to similar JSON structure
+          const receipt = parsed?.response?.receipt?.[0];
+          if (receipt) {
+            monerisResponse = {
+              response_code: receipt.response_code?.[0] || '000',
+              data_key: receipt.data_key?.[0] || receipt.ResolveData?.[0]?.data_key?.[0],
+              message: receipt.message?.[0] || 'Success',
+              receipt_id: receipt.ReceiptId?.[0]
+            };
+          }
         }
-      } catch (stripeErr) {
-        console.log('Stripe validation warning:', stripeErr.message);
+        
+      } catch (monerisError) {
+        console.error('❌ Direct API error:', monerisError.message);
+        
+        if (monerisError.response) {
+          console.error('Status:', monerisError.response.status);
+          console.error('Response data:', monerisError.response.data);
+        }
+        
+        throw new Error(`Moneris API error: ${monerisError.message}`);
       }
+    }
 
-      const existedCard = await LsrMerrcoCards.findOne({
-        last4: last4,
+    console.log('Moneris response:', JSON.stringify(monerisResponse, null, 2));
+
+    // 9. Check if successful
+    if (!monerisResponse) {
+      throw new Error('No response from Moneris');
+    }
+
+    // Extract response data
+    const responseCode = monerisResponse.response_code || 
+                        monerisResponse.ResponseCode || 
+                        monerisResponse.code ||
+                        (TEST_MODE ? '001' : '000');
+
+    const dataKey = monerisResponse.data_key || 
+                    monerisResponse.DataKey || 
+                    monerisResponse.dataKey || 
+                    monerisResponse.token ||
+                    (TEST_MODE ? monerisResponse.data_key : null);
+
+    const message = monerisResponse.message || 
+                    monerisResponse.Message || 
+                    monerisResponse.msg ||
+                    (TEST_MODE ? 'Success (TEST MODE)' : 'No message');
+
+    console.log('Response code:', responseCode);
+    console.log('Data key:', dataKey ? 'PRESENT' : 'MISSING');
+    console.log('Message:', message);
+
+    // Convert responseCode to number for comparison
+    const responseCodeNum = parseInt(responseCode);
+    
+    // Check if successful (response codes 0-49 are success in Moneris)
+    if (isNaN(responseCodeNum) || responseCodeNum > 49) {
+      const errorMsg = message || 'Card tokenization failed';
+
+      await FailedCards.create({
+        userId: userId,
+        error: errorMsg,
+        store_id: dispensary_id,
+        client_id: storeId,
+        response_code: responseCode,
+        platform: "lsrshowroom"
+      });
+
+      throw new Error(`Payment processor error (${responseCode}): ${errorMsg}`);
+    }
+
+    if (!dataKey) {
+      console.error('No data_key in response:', monerisResponse);
+      throw new Error('No token received from payment processor');
+    }
+
+    // 10. Reset other cards to non-default
+    await LsrMerrcoCards.updateMany(
+      {
         userId: userId,
         dispensary_id: dispensary_id,
         payment_gateway: 'Moneris'
-      });
+      },
+      { is_default: false }
+    );
 
-      if (existedCard) {
-        throw new Error(constants.payhq?.ALREADY_EXIST || 'Card already exists');
-      }
+    // 11. Save new card to database
+    const newCard = new LsrMerrcoCards({
+      userId: userId,
+      dispensary_id: dispensary_id,
+      customer_id: user._id.toString(),
+      card_lookupId: dataKey,
+      last4: last4,
+      card_expiry_month: card_expiry_month,
+      card_expiry_year: card_expiry_year,
+      apartment: apartment || '',
+      payment_gateway: 'Moneris',
+      is_default: true,
+      cardToken: dataKey,
+      client_id: storeId,
+      client_secret: '', // Don't store actual token
+      cardBrand: cardBrand,
+      cardFunding: cardFunding,
+      cardType: cardType,
+      address1: address || '',
+      city: city || '',
+      province: province || '',
+      country: country || '',
+      postal_code: postal_code || '',
+      test_mode: TEST_MODE // Mark as test card
+    });
 
-     
-      const dispensary = await User.findById(dispensary_id);
+    await newCard.save();
 
-console.log('=== DISPENSARY DATA ===');
-console.log('Dispensary ID:', dispensary_id);
-console.log('Dispensary found:', dispensary ? 'YES' : 'NO');
-if (dispensary) {
-  console.log('Dispensary name:', dispensary.name);
-  console.log('Dispensary fields:', Object.keys(dispensary._doc || dispensary));
-  console.log('moneris_storeId:', dispensary.moneris_storeId);
-  console.log('moneris_token:', dispensary.moneris_token ? 'PRESENT (hidden)' : 'MISSING');
-  console.log('All payment fields:');
-  for (const [key, value] of Object.entries(dispensary._doc || dispensary)) {
-    if (key.toLowerCase().includes('moneris') || key.toLowerCase().includes('store') || key.toLowerCase().includes('token')) {
-      console.log(`  ${key}:`, typeof value === 'string' && value.length > 10 ? '***' + value.slice(-4) : value);
-    }
-  }
-  console.log('=== END DISPENSARY DATA ===\n');
-}
-      if (!dispensary || !dispensary.moneris_storeId || !dispensary.moneris_token) {
-        await FailedCards.create({
-          userId: userId,
-          error: 'Moneris credentials not found for store.',
-          store_id: dispensary_id,
-          platform: "lsrshowroom"
-        });
-        throw new Error('Moneris credentials not found for store.');
-      }
+    console.log('✅ Card saved successfully. Card ID:', newCard._id);
+    console.log('Test Mode:', TEST_MODE ? 'YES' : 'NO');
 
-      
-      const monerisInstance = new Moneryze({
-        store_id: dispensary.moneris_storeId,
-        api_token: dispensary.moneris_token,
-        processing_country_code: 'CA',
-        environment: 'prod' 
-      });
-
-     
-      const last2Year = card_expiry_year.slice(-2);
-      const expdate = last2Year + card_expiry_month.padStart(2, '0');
-
-    
-      console.log('Calling resAddCC with monerisInstance');
-      const addedCard = await monerisInstance.resAddCC({
-        pan: card_number,
-        expdate: expdate
-      });
-
-      console.log('Moneris response:', addedCard);
-
-      if (!addedCard || !addedCard.isSuccess) {
-        await FailedCards.create({
-          userId: userId,
-          error: addedCard?.msg || 'Moneris card addition failed',
-          store_id: dispensary_id,
-          client_id: dispensary.moneris_storeId,
-          client_secret: dispensary.moneris_token,
-          cardBrand: cardBrand,
-          cardFunding: cardFunding,
-          cardType: cardType
-        });
-
-        throw new Error(addedCard?.msg || 'Failed to add card to payment gateway');
-      }
-
-      
-      await LsrMerrcoCards.updateMany(
-        {
-          userId: userId,
-          dispensary_id: dispensary_id,
-          payment_gateway: 'Moneris'
-        },
-        { is_default: false }
-      );
-
-      
-      const newCard = new LsrMerrcoCards({
-        userId: userId,
-        dispensary_id: dispensary_id,
-        card_lookupId: addedCard.data?.dataKey || addedCard.token,
+    // 12. Return success response
+    return {
+      success: true,
+      message: TEST_MODE ? 'Card added successfully (TEST MODE)' : 'Card added successfully',
+      data: {
+        cardId: newCard._id,
+        card_lookupId: dataKey,
         last4: last4,
-        card_expiry_month: card_expiry_month,
-        card_expiry_year: card_expiry_year,
+        expiry: `${card_expiry_month}/${card_expiry_year}`,
         is_default: true,
-        payment_gateway: 'Moneris',
-        address1: data.address,
-        city: data.city,
-        province: data.province,
-        country: data.country,
-        postal_code: data.postal_code,
-        client_id: dispensary.store_id || dispensary._id,
-        client_secret: dispensary.api_token || "",
-        cardBrand: cardBrand,
-        cardFunding: cardFunding,
-        cardType: cardType,
-        apartment: data.apartment || ""
-      });
+        test_mode: TEST_MODE,
+        monerisResponse: {
+          response_code: responseCode,
+          message: message
+        }
+      }
+    };
 
-      await newCard.save();
+  } catch (error) {
+    console.error('❌ Add card error:', error.message);
 
-      return {
-        success: true,
-        message: constants.payhq?.CARD_ADD_SUCCESS || 'Card added successfully',
-        data: addedCard,
-        createdCard: newCard
-      };
-
-    } catch (error) {
-      console.error('Add card error:', error);
-
+    // Log to FailedCards model
+    try {
       await FailedCards.create({
         userId: data.userId,
         error: error.message,
         store_id: data.dispensary_id,
         platform: "lsrshowroom"
       });
-
-      throw error;
+    } catch (logError) {
+      console.error('Failed to log error:', logError);
     }
+
+    throw error;
   }
+}
+
   async getMonerisCards(data) {
     try {
       const { dispensary_id, userId } = data;
 
       if (!dispensary_id) {
-        throw new Error('Dispensary ID is required');
+        throw new Error('Store ID is required');
       }
 
-      const cards = await LsrMerrcoCards.find({
+      const cards = await LsrMerrcoCard.find({
         userId: userId,
         dispensary_id: dispensary_id,
         payment_gateway: 'Moneris'
       })
         .sort({ is_default: -1, createdAt: -1 })
+        .select('-client_secret -__v')
         .lean();
+
+      // Format response
+      const formattedCards = cards.map(card => ({
+        id: card._id,
+        card_lookupId: card.card_lookupId,
+        last4: card.last4,
+        expiry: `${card.card_expiry_month}/${card.card_expiry_year}`,
+        cardBrand: card.cardBrand,
+        cardType: card.cardType,
+        is_default: card.is_default,
+        address: card.address1,
+        city: card.city,
+        province: card.province,
+        country: card.country,
+        postal_code: card.postal_code,
+        addedOn: card.createdAt
+      }));
 
       return {
         success: true,
-        data: cards
+        count: formattedCards.length,
+        data: formattedCards
       };
 
     } catch (error) {
       console.error('Get cards error:', error);
-
-      await FailedCards.create({
-        userId: data.userId,
-        error: error.message,
-        store_id: data.dispensary_id
-      });
-
       throw error;
     }
   }
@@ -252,28 +419,29 @@ if (dispensary) {
     try {
       const { id, userId } = data;
 
-      const card = await LsrMerrcoCards.findOne({
+      // Find and verify card ownership
+      const card = await LsrMerrcoCard.findOne({
         _id: id,
         userId: userId
       });
 
       if (!card) {
-        throw new Error('Card not found or unauthorized');
+        throw new Error('Card not found or you do not have permission');
       }
 
-    
-      await LsrMerrcoCards.findByIdAndDelete(id);
+      // Delete the card
+      await LsrMerrcoCard.findByIdAndDelete(id);
 
-    
+      // If deleted card was default, set another card as default
       if (card.is_default) {
-        const otherCard = await LsrMerrcoCards.findOne({
+        const otherCard = await LsrMerrcoCard.findOne({
           userId: userId,
           dispensary_id: card.dispensary_id,
           _id: { $ne: id }
-        });
+        }).sort({ createdAt: -1 });
 
         if (otherCard) {
-          await LsrMerrcoCards.findByIdAndUpdate(
+          await LsrMerrcoCard.findByIdAndUpdate(
             otherCard._id,
             { is_default: true }
           );
@@ -282,66 +450,119 @@ if (dispensary) {
 
       return {
         success: true,
-        message: 'Card deleted successfully.'
+        message: 'Card deleted successfully'
       };
 
     } catch (error) {
       console.error('Delete card error:', error);
-
-      await FailedCards.create({
-        userId: data.userId,
-        error: error.message
-      });
-
       throw error;
     }
   }
+  // async processMonerisCheckout(orderData) {
+  //   try {
+  //     const { card_lookupId, dispensary_id, totalprice, userId } = orderData;
 
- async processMonerisCheckout(orderData) {
-  try {
-    const { card_lookupId, dispensary_id, totalprice, userId } = orderData;
+
+  //     const dispensary = await User.findById(dispensary_id);
+
+  //     if (!dispensary || !dispensary.moneris_storeId || !dispensary.moneris_token) {
+  //       throw new Error('Store payment credentials not found');
+  //     }
 
 
-    const dispensary = await User.findById(dispensary_id);
-    
-    if (!dispensary || !dispensary.moneris_storeId || !dispensary.moneris_token) {
-      throw new Error('Store payment credentials not found');
+  //     const cardDetail = await LsrMerrcoCards.findOne({
+  //       userId: userId,
+  //       dispensary_id: dispensary_id,
+  //       card_lookupId: card_lookupId
+  //     }).lean();
+
+  //     if (!cardDetail) {
+  //       throw new Error('Card not found or unauthorized');
+  //     }
+
+  //     orderData.dispensary_user_id = dispensary.addedBy;
+
+
+  //     const monerisInstance = new Moneryze({
+  //       store_id: dispensary.moneris_storeId,
+  //       api_token: dispensary.moneris_token,
+  //       processing_country_code: 'CA',
+  //       environment: 'prod'
+  //     });
+
+
+  //     const paymentResult = await monerisInstance.resPurchaseCC({
+  //       token: card_lookupId,
+  //       amount: parseFloat(totalprice),
+  //       description: 'LSR purchase'
+  //     });
+
+
+  //   } catch (error) {
+
+  //   }
+  // }
+  async processMonerisCheckout(orderData) {
+    try {
+      const { card_lookupId, dispensary_id, totalprice, userId } = orderData;
+
+      const dispensary = await User.findById(dispensary_id);
+
+      const storeId = dispensary?._doc?.moneris_storeId || dispensary?.moneris_storeId;
+      const apiToken = dispensary?._doc?.moneris_token || dispensary?.moneris_token;
+
+      if (!dispensary || !storeId || !apiToken) {
+        throw new Error('Store payment credentials not found');
+      }
+
+      const cardDetail = await LsrMerrcoCards.findOne({
+        userId: userId,
+        dispensary_id: dispensary_id,
+        card_lookupId: card_lookupId
+      }).lean();
+
+      if (!cardDetail) {
+        throw new Error('Card not found or unauthorized');
+      }
+
+      orderData.dispensary_user_id = dispensary.addedBy;
+
+      const monerisInstance = new Moneryze({
+        store_id: storeId,
+        api_token: apiToken,
+        processing_country_code: 'CA',
+        environment: 'qa'
+      });
+
+      // Use send() method for purchase
+      const paymentResult = await monerisInstance.send({
+        type: 'res_purchase_cc',  // Purchase operation
+        data_key: card_lookupId,   // Use the stored token
+        amount: parseFloat(totalprice).toFixed(2), // Format to 2 decimal places
+        order_id: `LSR-${Date.now()}`, // Generate unique order ID
+        crypt_type: '7'
+      });
+
+      console.log('Payment result:', JSON.stringify(paymentResult, null, 2));
+
+      // Check if payment was successful
+      if (paymentResult && paymentResult.response_code <= 49) {
+        console.log('✅ Payment successful!');
+        return {
+          success: true,
+          data: paymentResult,
+          transaction_id: paymentResult.transaction_id || paymentResult.receipt_id
+        };
+      } else {
+        console.error('❌ Payment failed:', paymentResult?.message);
+        throw new Error(paymentResult?.message || 'Payment failed');
+      }
+
+    } catch (error) {
+      console.error('Process checkout error:', error);
+      throw error;
     }
-
-  
-    const cardDetail = await LsrMerrcoCards.findOne({
-      userId: userId,
-      dispensary_id: dispensary_id,
-      card_lookupId: card_lookupId
-    }).lean();
-
-    if (!cardDetail) {
-      throw new Error('Card not found or unauthorized');
-    }
-
-    orderData.dispensary_user_id = dispensary.addedBy;
-
-    
-    const monerisInstance = new Moneryze({
-      store_id: dispensary.moneris_storeId,
-      api_token: dispensary.moneris_token,
-      processing_country_code: 'CA',
-      environment: 'prod' 
-    });
-
-    
-    const paymentResult = await monerisInstance.resPurchaseCC({
-      token: card_lookupId,
-      amount: parseFloat(totalprice),
-      description: 'LSR purchase'
-    });
-
-   
-  } catch (error) {
-    
   }
-}
-
   async updateProduct(orderId) {
     try {
       const order = await ReserveOrder.findById(orderId);
@@ -360,7 +581,7 @@ if (dispensary) {
           continue;
         }
 
-        
+
         const product = await LsrProduct.findById(productId)
           .populate("addedBy")
           .populate("category_id")
@@ -379,7 +600,7 @@ if (dispensary) {
 
         console.log(`Updating product ${product.name}: ${productdata} - ${purchasequantity} = ${updatedQuantity}`);
 
-        
+
         await BuyProductAnalytic.create({
           product_id: productId,
           productName: product.name,
@@ -390,7 +611,7 @@ if (dispensary) {
           orderId: orderId
         });
 
-       
+
         if (product.variants && Array.isArray(product.variants) && product.variants.length > 0) {
           const variantId = item.variantId;
           if (variantId) {
@@ -401,14 +622,14 @@ if (dispensary) {
             if (variantIndex !== -1) {
               product.variants[variantIndex].quantity -= purchasequantity;
 
-            
+
               if (product.variants[variantIndex].quantity < 3) {
                 product.variants.splice(variantIndex, 1);
               }
             }
           }
 
-         
+
           await LsrProduct.findByIdAndUpdate(productId, {
             variants: product.variants
           });
@@ -437,7 +658,7 @@ if (dispensary) {
         return;
       }
 
-     
+
       const value = {
         "_id": product._id,
         "id": product._id,
@@ -524,7 +745,7 @@ if (dispensary) {
         "dislikeCount": product.dislikeCount || 0
       };
 
-    
+
       let key = "";
       if (product.instaleaf_categoryName) {
         key = (product.instaleaf_categoryName).toLowerCase() + "-" + product.dispensary_id + "-thccbdEmpty";
@@ -606,14 +827,14 @@ if (dispensary) {
       let storeCallMessage = '';
       let storeSMSMessage = '';
 
-     
+
       const storeId = dispensary._id.toString();
       if (storeId === "5f91e1905b82f11604748978") {
-       
+
         storeCallMessage = '<Response><Say>Hello ! you have a new order on puffski from 13th floor cooper crossing. Thank you</Say></Response>';
         storeSMSMessage = 'Hello ! you have a new order on puffski from 13th floor cooper crossing. Thank you';
       } else if (storeId === "5f91e53d5b82f1160474897c") {
-      
+
         storeCallMessage = '<Response><Say>Hello ! you have a new order on puffski from 13th floor silver springs . Thank you</Say></Response>';
         storeSMSMessage = 'Hello ! you have a new order on puffski from 13th floor silver springs . Thank you';
       } else {
@@ -621,15 +842,15 @@ if (dispensary) {
         storeSMSMessage = 'Hello ! you have a new order on puffski. Thank you';
       }
 
-    
+
       const notifyNumbers = [];
 
-   
+
       if (dispensary.mobile) {
         notifyNumbers.push(dispensary.mobile);
       }
 
-   
+
       if (local.ADMIN_NUMBER) {
         notifyNumbers.push(local.ADMIN_NUMBER);
       }
@@ -656,7 +877,7 @@ if (dispensary) {
       const smsNumbers = [
         local.ADMIN_NUMBER,
         local.CARL_NUMBER,
-        '+917814940060' 
+        '+917814940060'
       ].filter(num => num);
 
       for (const number of smsNumbers) {
@@ -672,7 +893,7 @@ if (dispensary) {
         }
       }
 
-      
+
       try {
         await slackWebClient.chat.postMessage({
           channel: slackChannelId,

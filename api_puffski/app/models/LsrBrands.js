@@ -1,4 +1,3 @@
-// models/LsrBrand.js (CORRECTED)
 const mongoose = require('mongoose');
 
 const lsrBrandSchema = new mongoose.Schema({

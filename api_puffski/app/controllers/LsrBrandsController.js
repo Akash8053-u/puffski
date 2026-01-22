@@ -2,7 +2,6 @@
 const { LsrBrandService } = require('../services/LsrBrandsService');
 
 module.exports = {
-    // Save single brand
     save: async (req, res) => {
         try {
             const result = await LsrBrandService.saveBrand(req.body, { 
@@ -26,7 +25,6 @@ module.exports = {
         }
     },
 
-    // Update brand
     update: async (req, res) => {
         try {
             const data = { ...req.body, id: req.params.id };
@@ -51,7 +49,6 @@ module.exports = {
         }
     },
 
-    // Delete brand
     delete: async (req, res) => {
         try {
             const data = { id: req.params.id };
@@ -76,7 +73,6 @@ module.exports = {
         }
     },
 
-    // Get single brand
     getBrand: async (req, res) => {
         try {
             const result = await LsrBrandService.getBrandById(req.params.id);
@@ -98,7 +94,6 @@ module.exports = {
         }
     },
 
-    // Get all brands with
     getAllBrands: async (req, res) => {
         try {
             const {

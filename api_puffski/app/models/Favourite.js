@@ -1,4 +1,3 @@
-// models/Favourite.js
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
@@ -6,7 +5,7 @@ const FavouriteSchema = new Schema(
   {
     addedBy: {
       type: Schema.Types.ObjectId,
-      ref: "User", // Reference to User model
+      ref: "User", 
       required: true,
     },
     type: {
@@ -16,13 +15,13 @@ const FavouriteSchema = new Schema(
     },
     item_id: {
       type: Schema.Types.ObjectId,
-      ref: "Item", // Reference to Item (for dispensary)
+      ref: "Item", 
     },
     product_id: {
       type: Schema.Types.ObjectId,
-      ref: "Product", // Reference to Product
+      ref: "Product", 
     },
-    // Optional notes or metadata
+    
     notes: {
       type: String,
       default: "",
@@ -34,11 +33,10 @@ const FavouriteSchema = new Schema(
   },
   {
     timestamps: true,
-    versionKey:false // automatically adds createdAt and updatedAt
+    versionKey:false 
   }
 );
 
-// Optional: Index to avoid duplicate favourites for same user & type
 FavouriteSchema.index({ addedBy: 1, type: 1, item_id: 1, product_id: 1 }, { unique: true });
 
 module.exports = mongoose.model("Favourite", FavouriteSchema);

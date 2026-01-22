@@ -1,4 +1,3 @@
-// models/LsrCart.js - Minimal version
 const mongoose = require('mongoose');
 
 const lsrCartSchema = new mongoose.Schema({

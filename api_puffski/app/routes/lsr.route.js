@@ -76,14 +76,16 @@ router.put('/update_cart', lsrCartController.updateCart);
 router.get('/get_reservedcart', lsrCartController.getReservedCart);
 
 // ===== PAYMENT ROUTES =====
-// router.post('/payment/cards', lsrPaymentController.addCard);
-// router.get('/payment/cards', lsrPaymentController.getMonerisCards);
-// router.delete('/payment/cards/:id', lsrPaymentController.deleteCard);
+router.post('/payment/cards', lsrPaymentController.addCard);
+router.get('/payment/cards', lsrPaymentController.getMonerisCards);
+router.delete('/payment/cards/:id', lsrPaymentController.deleteCard);
+router.post('/payment/checkout', lsrPaymentController.monerisCheckout);
 
-// LSR-specific payment routes (from Sails)
-// router.get('/lsr/get_card', lsrPaymentController.getMonerisCards);
+// LSR-specific payment routes (alternative naming)
 router.post('/add_card', lsrPaymentController.addCard);
-// router.delete('/lsr/delete_card', lsrPaymentController.deleteCard);
+router.get('/get_card', lsrPaymentController.getMonerisCards);
+router.delete('/delete_card/:id', lsrPaymentController.deleteCard);
+router.post('/checkout', lsrPaymentController.monerisCheckout);
 
 // ===== WISHLIST ROUTES =====
 // router.get('/wishlist', lsrWishlistController.whislistProducts);
