@@ -6,6 +6,7 @@ const LsrProductService = require('./LsrProductService');
 const LsrCategoryService = require('./LsrCategoryService');
 const LsrCartService  = require('./LsrCartService');
 const ErrorNotificationService = require('./ErrorNotificationService');
+const ItemProductServices = require('./ItemProductService');
 module.exports = {
     UserService,
     BlogService,
@@ -13,5 +14,6 @@ module.exports = {
     LsrProductService,
     LsrCategoryService,
     LsrCartService,
-    ErrorNotificationService
+    ErrorNotificationService,
+    ItemProductServices
 };

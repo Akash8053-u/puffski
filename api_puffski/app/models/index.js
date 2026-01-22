@@ -23,9 +23,11 @@ const buiyProductAnalytics = require('./buyProductAnalytics');
 const failedCards = require('./failedCards');
 const itemCategory = require('./ItemCategory');
 const itemProduct = require('./Itemproduct');
+const item = require('./item');
 const LsrCart = require('./lsrCarts');
 const LsrMerrcoCard = require('./lsrMerrecoCards');
 const ErrorNotification = require('./ErrorNotification');
+
 const db = {
     mongoose,
     User,
@@ -53,7 +55,8 @@ const db = {
     itemProduct,
     LsrMerrcoCard,
     LsrCart,
-    ErrorNotification
+    ErrorNotification,
+    item
 };
 
 module.exports = db;

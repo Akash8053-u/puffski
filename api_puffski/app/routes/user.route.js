@@ -151,6 +151,34 @@ router.get("/errornotifications", getAllErrorNotifications);
 
 // // // // GET: Get single error notification (detail)
  router.get("/errornotification",detail);
+
+
+//==========friendController Routes==================
+//  router.get("/searchUsers", searchUsers);
+
+// // Send friend request
+// router.post("/addFriend", addFriend);
+
+// // Pending friend requests
+// router.get("/getPendingFriendList", getPendingFriendList);
+
+// // Accept / Reject friend request
+// router.put("/acceptRejectRequest", acceptRejectRequest);
+
+// // Get friend list
+// router.get("/getFriendList", getFriendList);
+
+// // Block a user
+// router.put("/blockUser", blockUser);
+
+// // Blocked users list
+// router.get("/blockedUsers", blockedUsers);
+
+// // Dispensary followers
+// router.get("/dispensaryFollowers", dispensaryFollowers);
+
+// // Followed dispensaries
+// router.get("/followedstores", followedDispensaries);
  
 module.exports = router;
  

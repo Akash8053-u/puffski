@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 router.use('/',require('./user.route'));
+router.use('/', require('./ItemProductRoute'));
 router.use('/lsr', require('./lsr.route'));
 router.use('/common',require('./commonRoutes'));
 router.get('/', (req, res) => {
