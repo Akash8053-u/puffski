@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const User = require('./users');
 const Favourite = require('./Favourite');
@@ -23,8 +23,11 @@ const buiyProductAnalytics = require('./buyProductAnalytics');
 const failedCards = require('./failedCards');
 const itemCategory = require('./ItemCategory');
 const itemProduct = require('./Itemproduct');
+const item = require('./item');
 const LsrCart = require('./lsrCarts');
 const LsrMerrcoCard = require('./lsrMerrecoCards');
+const ErrorNotification = require('./ErrorNotification');
+
 const db = {
     mongoose,
     User,
@@ -51,7 +54,9 @@ const db = {
     itemCategory,
     itemProduct,
     LsrMerrcoCard,
-    LsrCart
+    LsrCart,
+    ErrorNotification,
+    item
 };
 
 module.exports = db;

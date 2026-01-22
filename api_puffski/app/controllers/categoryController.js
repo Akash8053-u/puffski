@@ -33,6 +33,7 @@ exports.delete = async (req, res, next) => {
   }
 };
 
+
 exports.list = async (req, res, next) => {
   try {
     const portal = req.query.portal;
@@ -304,3 +305,30 @@ exports.getProducerCategoriesWithProduct = async (req, res) => {
 
 
 
+
+exports.getProducerCategoriesWithProduct = async (req, res) => {
+  try {
+    const { producer_id } = req.params;
+
+    if (!producer_id) {
+      return res.status(400).json({
+        success: false,
+        message: "producer_id is required"
+      });
+    }
+
+    const categories =
+      await service.Categoryservice.getProducerCategoriesWithProduct(producer_id);
+
+    return res.status(200).json({
+      success: true,
+      data: categories
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error"
+    });
+  }
+};

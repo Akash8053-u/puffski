@@ -2,9 +2,12 @@ const express = require("express");
 const router = express.Router();
  
 // Controllers
+
 const UsersController = require("../controllers/userController");
 const UserActivityController = require('../controllers/UserActivityController');
 const visitController = require("../controllers/visitController");
+const { saveErrorNotifications, detail, getAllErrorNotifications } = require("../controllers/ErrorNotificationController");
+
 // const OAuthController = require("../controllers/OAuthController");
 // const CommonController = require("../controllers/commonController");
  
@@ -139,6 +142,43 @@ router.get("/useractivity", UserActivityController.detail);
 //visit controller
  
 router.post("/visit_website/:id", visitController.visitWebsite);
+
+
+router.post("/add/errornotification", saveErrorNotifications);
+
+// // GET: Get all error notifications
+router.get("/errornotifications", getAllErrorNotifications);
+
+// // // // GET: Get single error notification (detail)
+ router.get("/errornotification",detail);
+
+
+//==========friendController Routes==================
+//  router.get("/searchUsers", searchUsers);
+
+// // Send friend request
+// router.post("/addFriend", addFriend);
+
+// // Pending friend requests
+// router.get("/getPendingFriendList", getPendingFriendList);
+
+// // Accept / Reject friend request
+// router.put("/acceptRejectRequest", acceptRejectRequest);
+
+// // Get friend list
+// router.get("/getFriendList", getFriendList);
+
+// // Block a user
+// router.put("/blockUser", blockUser);
+
+// // Blocked users list
+// router.get("/blockedUsers", blockedUsers);
+
+// // Dispensary followers
+// router.get("/dispensaryFollowers", dispensaryFollowers);
+
+// // Followed dispensaries
+// router.get("/followedstores", followedDispensaries);
  
 module.exports = router;
  

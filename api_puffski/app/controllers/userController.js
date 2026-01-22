@@ -1,80 +1,91 @@
-const { sendCommunityConnectEmail, communityContactUSService } = require("../Emails/communityEmail.js");
+const {
+  sendCommunityConnectEmail,
+  communityContactUSService,
+} = require("../Emails/communityEmail.js");
 const {
   sendContactUsEmail,
   sendLsrContactUsEmail,
   sendFeedbackEmail,
 } = require("../Emails/contactEmail.js");
-const { sendUserVerificationEmail, sendVerifyRequestEmail } = require("../Emails/emailVerifyLinks.js");
+const {
+  sendUserVerificationEmail,
+  sendVerifyRequestEmail,
+} = require("../Emails/emailVerifyLinks.js");
 const { sendQuestion, addStrainEmail } = require("../Emails/questionEmail.js");
 const validations = require("../Validations/index");
 const db = require("../models/index.js");
-const services = require("../services/index");
+
 const service = require("../services/index");
 const {
   updateUserService,
   getUserInfoService,
 } = require("../services/userServices.js");
 const constants = require("../utils/constants.js");
+const { sendEmail } = require("./smtpController.js");
 
 async function register(req, res) {
   try {
-    console.log('Registration request received');
-    console.log('Request body:', req.body);
-    console.log('Request headers:', req.headers['content-type']);
-    
+    console.log("Registration request received");
+    console.log("Request body:", req.body);
+    console.log("Request headers:", req.headers["content-type"]);
+
     // Check if request body exists
     if (!req.body || Object.keys(req.body).length === 0) {
       return res.status(400).json({
         success: false,
-        error: { code: 400, message: 'Request body is empty or missing' }
+        error: { code: 400, message: "Request body is empty or missing" },
       });
     }
-    
+
     // Validate required fields
-    const requiredFields = ['email', 'password'];
-    const missingFields = requiredFields.filter(field => !req.body[field]);
-    
+    const requiredFields = ["email", "password"];
+    const missingFields = requiredFields.filter((field) => !req.body[field]);
+
     if (missingFields.length > 0) {
       return res.status(400).json({
         success: false,
-        error: { 
-          code: 400, 
-          message: `Missing required fields: ${missingFields.join(', ')}` 
-        }
+        error: {
+          code: 400,
+          message: `Missing required fields: ${missingFields.join(", ")}`,
+        },
       });
     }
-    
+
     // Trim and validate email
-    const email = req.body.email ? req.body.email.trim() : '';
-    if (!email || !email.includes('@')) {
+    const email = req.body.email ? req.body.email.trim() : "";
+    if (!email || !email.includes("@")) {
       return res.status(400).json({
         success: false,
-        error: { code: 400, message: 'Valid email is required' }
+        error: { code: 400, message: "Valid email is required" },
       });
     }
-    
+
     // Validate password
-    const password = req.body.password ? req.body.password.trim() : '';
+    const password = req.body.password ? req.body.password.trim() : "";
     if (!password || password.length < 6) {
       return res.status(400).json({
         success: false,
-        error: { code: 400, message: 'Password must be at least 6 characters' }
+        error: { code: 400, message: "Password must be at least 6 characters" },
       });
     }
-    
+
     // Prepare registration data
     const registrationData = {
       email: email.toLowerCase(),
       password: password,
-      username1: req.body.username1 ? req.body.username1.trim().toLowerCase() : email.toLowerCase(),
-      username: req.body.username ? req.body.username.trim().toLowerCase() : email.toLowerCase(),
-      roles: req.body.roles || 'U',
+      username1: req.body.username1
+        ? req.body.username1.trim().toLowerCase()
+        : email.toLowerCase(),
+      username: req.body.username
+        ? req.body.username.trim().toLowerCase()
+        : email.toLowerCase(),
+      roles: req.body.roles || "U",
       // Add other fields if needed
-      ...req.body
+      ...req.body,
     };
-    
-    console.log('Processed registration data:', registrationData);
-    
+
+    console.log("Processed registration data:", registrationData);
+
     // Call service to register user
     const result = await service.UserService.registerUser(registrationData);
 
@@ -88,7 +99,7 @@ async function register(req, res) {
         await sendEmail(
           result.data.email,
           "Welcome",
-          "Your account has been created"
+          "Your account has been created",
         );
       } catch (emailErr) {
         console.warn("Email failed to send:", emailErr.message);
@@ -349,7 +360,7 @@ async function changePassword(req, res) {
       userId,
       currentPassword,
       newPassword,
-      confirmPassword
+      confirmPassword,
     );
 
     return res.status(200).json(result);
@@ -505,7 +516,7 @@ async function updateProfile(req, res) {
     const result = await service.UserService.updateUserProfileService(
       userId,
       data,
-      userRole
+      userRole,
     );
 
     return res.status(result.code).json(result);
@@ -578,7 +589,7 @@ async function userVerification(req, res) {
       await db.User.findByIdAndUpdate(
         { _id: user._id },
         { isVerified: "Y", date_verified: new Date(), status: "active" },
-        { new: true }
+        { new: true },
       );
 
       // Prepare verification URL
@@ -656,12 +667,12 @@ async function verify(req, res) {
           date_verified: new Date(),
           status: "active",
         },
-        { where: { id: user.id } }
+        { where: { id: user.id } },
       );
     }
 
     return res.redirect(
-      `${process.env.Puffski_FRONT_WEB_URL}?email=${user.code}&verify=true`
+      `${process.env.Puffski_FRONT_WEB_URL}?email=${user.code}&verify=true`,
     );
   } catch (err) {
     console.error("Verify Error:", err);
@@ -692,7 +703,7 @@ async function lsrVerify(req, res) {
     const { code } = result;
 
     return res.redirect(
-      `${process.env.LSR_FRONT_WEB_URL}?email=${code}&verify=true`
+      `${process.env.LSR_FRONT_WEB_URL}?email=${code}&verify=true`,
     );
   } catch (err) {
     console.error("LSR Verify Controller Error:", err);
@@ -760,23 +771,19 @@ async function getDashboardData(req, res) {
   }
 }
 
-
-async function updateFCMData (req, res)  {
+async function updateFCMData(req, res) {
   const { id, push_token } = req.body;
 
-  const result = await service.UserService.updateFCMData( req,res);
+  const result = await service.UserService.updateFCMData(req, res);
 
   if (!result.success) {
     return res.status(result.error.code || 400).json(result);
   }
 
   return res.status(200).json(result);
-};
+}
 
-
-
-
-async  function verifyRequest(req, res){
+async function verifyRequest(req, res) {
   try {
     const user_id = req.body.user_id;
     const user = await db.User.findOne({ _id: user_id });
@@ -790,47 +797,51 @@ async  function verifyRequest(req, res){
 
     await sendVerifyRequestEmail({
       username: user.username1,
-      email: user.email
+      email: user.email,
     });
 
     return res.status(200).json({
       success: true,
       message: "Request is successfully sent to verify account.",
     });
-
   } catch (err) {
     return res.status(400).json({
       success: false,
       error: err.message,
     });
   }
-};
+}
 
-
-
-
- async function index(req, res) {
-    try {
-      const data = req.body;
-      const result = await service.UserService.adminSideRegistration(data);
-      if (!result.success) {
-        return res.status(result.error?.code || 400).json(result);
-      }
-      return res.status(200).json(result);
-    } catch (err) {
-      console.error("Controller error:", err);
-      return res.status(500).json({ success: false, error: { message: err.message } });
+async function index(req, res) {
+  try {
+    const data = req.body;
+    const result = await service.UserService.adminSideRegistration(data);
+    if (!result.success) {
+      return res.status(result.error?.code || 400).json(result);
     }
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error("Controller error:", err);
+    return res
+      .status(500)
+      .json({ success: false, error: { message: err.message } });
   }
+}
 
 async function communityConnect(req, res) {
   try {
-    const { username1: username, email, phone, roles, additionalNotes } = req.body;
+    const {
+      username1: username,
+      email,
+      phone,
+      roles,
+      additionalNotes,
+    } = req.body;
 
-    let roleLabel = '';
-    if (roles === 'DR') roleLabel = 'Doctor';
-    else if (roles === 'B') roleLabel = 'Brand';
-    else if (roles === 'D') roleLabel = 'Cannabis Store';
+    let roleLabel = "";
+    if (roles === "DR") roleLabel = "Doctor";
+    else if (roles === "B") roleLabel = "Brand";
+    else if (roles === "D") roleLabel = "Cannabis Store";
 
     const result = await sendCommunityConnectEmail({
       username,
@@ -853,28 +864,28 @@ async function communityConnect(req, res) {
   }
 }
 
-  async function communityContactUS(req, res) {
-    const { name, email, message } = req.body;
+async function communityContactUS(req, res) {
+  const { name, email, message } = req.body;
 
-    try {
-      const result = await communityContactUSService({ name, email, message });
+  try {
+    const result = await communityContactUSService({ name, email, message });
 
-      if (result.success) {
-        return res.status(200).json({
-          success: true,
-          code: 200,
-          data: { message: 'Email sent to admin successfully.' },
-        });
-      } else {
-        throw result.error;
-      }
-    } catch (err) {
-      return res.status(400).json({
-        success: false,
-        error: { code: 400, message: '' + err },
+    if (result.success) {
+      return res.status(200).json({
+        success: true,
+        code: 200,
+        data: { message: "Email sent to admin successfully." },
       });
+    } else {
+      throw result.error;
     }
+  } catch (err) {
+    return res.status(400).json({
+      success: false,
+      error: { code: 400, message: "" + err },
+    });
   }
+}
 
 async function setPasswordForStores(req, res) {
   try {
@@ -885,32 +896,35 @@ async function setPasswordForStores(req, res) {
 
     return res.status(500).json({
       success: false,
-      message: "Internal Server Error"
+      message: "Internal Server Error",
     });
   }
 }
 
- async function lsrRegisterUser(req, res) {
+async function lsrRegisterUser(req, res) {
   try {
     const data = req.body;
     const context = {};
 
-    const result = await service.UserService.lsrRegisterUserService(data, context);
+    const result = await service.UserService.lsrRegisterUserService(
+      data,
+      context,
+    );
 
     // Respond with the result from the service
     return res.status(result.success ? 200 : 400).json(result);
   } catch (error) {
-    console.error('Error in LSR register controller:', error);
+    console.error("Error in LSR register controller:", error);
     return res.status(500).json({
       success: false,
       error: {
         code: 500,
-        message: 'Internal server error',
+        message: "Internal server error",
         details: error.message,
       },
     });
   }
-};
+}
 
 async function getAllUsers(req, res) {
   try {
@@ -918,7 +932,7 @@ async function getAllUsers(req, res) {
     const result = await service.UserService.getAllUsersService(filters);
     return res.status(200).json({ success: true, data: result });
   } catch (err) {
-    console.error('getAllUsers error:', err);
+    console.error("getAllUsers error:", err);
     return res.status(500).json({ success: false, error: err.message });
   }
 }
@@ -928,48 +942,49 @@ async function getAllUsersNew(req, res) {
     const result = await service.UserService.getAllUsersnewService(req.query);
     return res.status(200).json({ success: true, data: result });
   } catch (err) {
-    console.error('getAllUsers error:', err);
+    console.error("getAllUsers error:", err);
     return res.status(500).json({ success: false, error: err.message });
   }
 }
 
-async function otpVerify(req,res){
+async function otpVerify(req, res) {
   try {
-    const result =await service.UserService.otpVerifyService(req,res)
-    return res.status(200).json({code:200,error:{
-      status:true,
-      message:constants.messages.OTP_SUCCESS,
-    
-    } })
+    const result = await service.UserService.otpVerifyService(req, res);
+    return res.status(200).json({
+      code: 200,
+      error: {
+        status: true,
+        message: constants.messages.OTP_SUCCESS,
+      },
+    });
   } catch (error) {
-     const err = new error
-     err.status =401
-     next(err)
-
+    const err = new error();
+    err.status = 401;
+    next(err);
   }
 }
 
- async function  lsrCommonOTPSend(req, res)  {
-    try {
-      const { email } = req.body;
+async function lsrCommonOTPSend(req, res) {
+  try {
+    const { email } = req.body;
 
-      if (!email) {
-        return res.status(400).json({
-          success: false,
-          error: { message: "Email is required" },
-        });
-      }
-
-      const result = await service.UserService.lsrCommonOTPSend(email);
-
-      return res.status(result.success ? 200 : 400).json(result);
-    } catch (err) {
-      return res.status(500).json({
+    if (!email) {
+      return res.status(400).json({
         success: false,
-        error: { message: err.message },
+        error: { message: "Email is required" },
       });
     }
+
+    const result = await service.UserService.lsrCommonOTPSend(email);
+
+    return res.status(result.success ? 200 : 400).json(result);
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      error: { message: err.message },
+    });
   }
+}
 
 const getAllUsersUpdate = async (req, res) => {
   try {
@@ -980,43 +995,43 @@ const getAllUsersUpdate = async (req, res) => {
       count: req.query.count,
       status: req.query.status,
       roles: req.query.roles,
-      userroles: req.query.userroles
+      userroles: req.query.userroles,
     };
 
     const result = await service.UserService.getAllUsersUpdate(params);
 
     return res.json({
       success: true,
-      data: result
+      data: result,
     });
-
   } catch (err) {
-    console.error('Error in getAllUsersUpdate:', err);
+    console.error("Error in getAllUsersUpdate:", err);
     return res.status(500).json({ success: false, error: err.message });
   }
 };
 
- async function getVerifiedAccounts(req, res) {
+async function getVerifiedAccounts(req, res) {
   try {
-  
     const page = Number(req.query.page) || 1;
     const count = Number(req.query.count) || 10;
-    const search = req.query.search ? req.query.search.trim() : '';
-    const sortBy = req.query.sortBy ? req.query.sortBy.trim() : 'ageVerifiedAt desc';
+    const search = req.query.search ? req.query.search.trim() : "";
+    const sortBy = req.query.sortBy
+      ? req.query.sortBy.trim()
+      : "ageVerifiedAt desc";
 
     const skipNo = (page - 1) * count;
 
     // Base query for verified users
     const query = {
       ageVerifiedBy: req.identity.id,
-      isDeleted: false
+      isDeleted: false,
     };
 
     // Apply search filter if provided
     if (search) {
       query.$or = [
         { username1: { like: `%${search}%` } },
-        { fullName: { like: `%${search}%` } }
+        { fullName: { like: `%${search}%` } },
       ];
     }
 
@@ -1033,20 +1048,18 @@ const getAllUsersUpdate = async (req, res) => {
     return res.status(200).json({
       success: true,
       data: users,
-      total
+      total,
     });
-
   } catch (err) {
-    console.error('Error in getVerifiedAccounts:', err);
+    console.error("Error in getVerifiedAccounts:", err);
     return res.status(400).json({
       success: false,
-      error: { code: 400, message: err.toString() }
+      error: { code: 400, message: err.toString() },
     });
   }
-};
+}
 
-
-async function otpSend(req, res)  {
+async function otpSend(req, res) {
   try {
     const { email } = req.body;
 
@@ -1058,7 +1071,6 @@ async function otpSend(req, res)  {
 
     const result = await service.UserService.otpSendService(email);
     return res.status(result.success ? 200 : 400).json(result);
-
   } catch (err) {
     console.error("OTP Send Error:", err);
 
@@ -1067,7 +1079,7 @@ async function otpSend(req, res)  {
       message: "Server error",
     });
   }
-};
+}
 
 async function commonOTPSend(req, res) {
   const { email } = req.body;
@@ -1079,14 +1091,11 @@ async function commonOTPSend(req, res) {
   }
 }
 
-
 async function verifyUserAccount(req, res) {
   try {
-
-    const id = req.body.id;         
+    const id = req.body.id;
     const body = req.body;
     const identity = req.identity;
-
 
     await service.UserService.verifyUserAccount(id, body, identity);
 
@@ -1102,8 +1111,6 @@ async function verifyUserAccount(req, res) {
   }
 }
 
-
-
 async function autoLogin(req, res) {
   try {
     const data = req.body;
@@ -1117,7 +1124,7 @@ async function autoLogin(req, res) {
   } catch (err) {
     return res.status(500).json({
       success: false,
-      error: { code: 500, message: err.message || 'Internal Server Error' },
+      error: { code: 500, message: err.message || "Internal Server Error" },
     });
   }
 }
@@ -1127,21 +1134,24 @@ const ageVerification = async (req, res) => {
     const id = req.body.id; // Corrected from req.param('id')
     const queryData = req.query;
 
-    const result = await service.UserService.ageVerificationService(id, queryData, req.identity.id);
+    const result = await service.UserService.ageVerificationService(
+      id,
+      queryData,
+      req.identity.id,
+    );
 
     return res.status(200).json({
       success: true,
-      message: 'Account verified successfully for view products.',
+      message: "Account verified successfully for view products.",
       data: result,
     });
   } catch (err) {
     return res.status(400).json({
       success: false,
-      error: { code: 400, message: err.message || '' + err },
+      error: { code: 400, message: err.message || "" + err },
     });
   }
 };
-
 
 const signin = async (req, res) => {
   try {
@@ -1157,25 +1167,19 @@ const signin = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       success: false,
-      error: { code: 500, message: err.message || '' + err },
+      error: { code: 500, message: err.message || "" + err },
     });
   }
 };
 
-
-
-
-async function signinSocial (req, res,next) {
+async function signinSocial(req, res, next) {
   try {
-    const result =  await service.UserService.signupSocialMedia(req.body);
+    const result = await service.UserService.signupSocialMedia(req.body);
     return res.status(result.code).json(result);
   } catch (error) {
     next(error);
-  } 
-};
-
-
-
+  }
+}
 
 module.exports = {
   signin,
@@ -1183,7 +1187,7 @@ module.exports = {
   getVerifiedAccounts,
   getAllUsersNew,
   forgotPassword,
-register,
+  register,
   signinUser,
   updateUser,
   userProfileData,
@@ -1219,6 +1223,6 @@ register,
   commonOTPSend,
   verifyUserAccount,
   autoLogin,
-ageVerification,
-signinSocial
+  ageVerification,
+  signinSocial,
 };

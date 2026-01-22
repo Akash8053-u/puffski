@@ -3,6 +3,10 @@ module.exports = {
     //"env": "prod"
     env: 'sandbox',
   },
+    ERROR_NOTIFICATION_CREATED: "Error notification added successfully",
+  ERROR_NOTIFICATION_FAILED: "Failed to save error notification",
+  VALIDATION_ERROR: "Validation failed",
+  INTERNAL_SERVER_ERROR: "Internal server error",
   key: {
     activekey:
       'ace9a61712b4c64a7ede39d532c1b24269865f02a67db4cf85358958fcdad38a974a2755',

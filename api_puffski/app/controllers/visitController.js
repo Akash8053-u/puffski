@@ -2,7 +2,7 @@ const db = require('../models/index')
 
 module.exports = {
 
-  // Track website visit
+
   async visitWebsite(req, res) {
     try {
       // Get real client IP (supports proxies/load balancers)
