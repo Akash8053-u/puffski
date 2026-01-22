@@ -1,11 +1,11 @@
 const service = require("../services/index");
-
+const db = require("../models/index");
 
 const MESSAGES = require("../utils/constants");
 
 
 
-const saveErrorNotifications = async (req, res) => {
+exports.saveErrorNotifications = async (req, res) => {
   try {
     const data = req.body;
 
@@ -28,6 +28,44 @@ const saveErrorNotifications = async (req, res) => {
   }
 };
 
-module.exports = {
-  saveErrorNotifications,
+
+
+exports.detail= async (req, res)=>{
+        try{
+            const id = req.query.id;
+
+            const detail = await db.ErrorNotification.findById({_id:id}).populate('addedBy')
+
+            return res.status(200).json({
+                success:true,
+                data:detail
+            })
+        }catch(err){
+            return res.status(400).json({
+                success:false,
+                error:{code:400,message:""+err}
+            })
+        }
+    }
+
+
+
+exports. getAllErrorNotifications = async (req, res) => {
+  try {
+    const result = await service.ErrorNotificationService.getAllErrorNotificationsService(req.query);
+
+    return res.status(200).json({
+      success: true,
+      data: result.data,
+      total: result.total,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 500,
+        message: error.message,
+      },
+    });
+  }
 };

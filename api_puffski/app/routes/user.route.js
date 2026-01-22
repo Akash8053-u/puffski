@@ -2,10 +2,12 @@ const express = require("express");
 const router = express.Router();
  
 // Controllers
+
 const UsersController = require("../controllers/userController");
 const UserActivityController = require('../controllers/UserActivityController');
 const visitController = require("../controllers/visitController");
-const { saveErrorNotifications } = require("../controllers/ErrorNotificationController");
+const { saveErrorNotifications, detail, getAllErrorNotifications } = require("../controllers/ErrorNotificationController");
+
 // const OAuthController = require("../controllers/OAuthController");
 // const CommonController = require("../controllers/commonController");
  
@@ -145,10 +147,10 @@ router.post("/visit_website/:id", visitController.visitWebsite);
 router.post("/add/errornotification", saveErrorNotifications);
 
 // // GET: Get all error notifications
-// router.get("/errornotifications", getAllErrorNotifications);
+router.get("/errornotifications", getAllErrorNotifications);
 
-// // // GET: Get single error notification (detail)
-// router.get("/errornotification", detail);
+// // // // GET: Get single error notification (detail)
+ router.get("/errornotification",detail);
  
 module.exports = router;
  
