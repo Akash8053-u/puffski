@@ -80,14 +80,18 @@ router.delete('/destroy-cart', authenticate, cartController.emptyCart);
 
 // ==================== COUNTRY CONTROLLER ROUTES ====================
 
+// Get all countries
 router.get('/country', CountryController.getAllCountry);
-router.get('/country/', CountryController.singleCountry);
 
 router.post('/country', CountryController.save);
-router.put('/country/:id', CountryController.update);
+
+// router.put('/:id', authorize(['admin', 'superadmin']), CountryController.update);
+router.put('/country/:id',  CountryController.update);
+
+// router.delete('/:id', authorize(['admin', 'superadmin']), CountryController.delete);
 router.delete('/deletecountry/:id', CountryController.delete);
 
-// ==================== CSV EXPORT CONTROLLER ROUTES ====================
+router.get('/country/', CountryController.singleCountry);
 
 router.get('/date/userExcel', CsvExportController.webdateuserExcel);
 router.get('/webUserExcel', CsvExportController.webUserExcel);
