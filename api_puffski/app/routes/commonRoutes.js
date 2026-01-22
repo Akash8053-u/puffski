@@ -123,26 +123,19 @@ router.delete('/delete-cart', cartController.delete);
 router.delete('/destroy-cart', cartController.emptyCart);
 
 
-// Get all countries (public access)
+// Get all countries
 router.get('/country', CountryController.getAllCountry);
-router.get('/allcountry', CountryController.getCountryList);
-router.get('/type/:type', CountryController.getCountriesByType);
-router.get('/allcountry/:id', CountryController.singleCountry);
 
 // router.post('/', authorize(['admin', 'superadmin']), CountryController.save);
 router.post('/country', CountryController.save);
 
-// Update country (Admin only)
 // router.put('/:id', authorize(['admin', 'superadmin']), CountryController.update);
 router.put('/country/:id',  CountryController.update);
 
-// Delete country (Admin only)
 // router.delete('/:id', authorize(['admin', 'superadmin']), CountryController.delete);
 router.delete('/deletecountry/:id', CountryController.delete);
 
-// For mobile app compatibility (similar to your existing routes)
-router.get('/all/country', CountryController.getAll);
-router.get('/single/country/:id', CountryController.singleCountry);
+router.get('/country/', CountryController.singleCountry);
 
 //===== EXCEL EXPORT ROUTES===
 router.get('/date/userExcel', CsvExportController.webdateuserExcel);
